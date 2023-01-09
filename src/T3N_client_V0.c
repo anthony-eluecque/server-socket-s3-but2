@@ -51,12 +51,13 @@ int main(int argc, char *argv[]){
 	printf("Connexion au serveur %s:%d réussie!\n",ip_dest,port_dest);
 
 
-
     char grille[LIGNES][COLONNES];
     int choixCol = 10,choixLigne = 10;
     initGrille(grille);
-    char Recoi_start[1]; 
-    switch(nb = read(descripteurSocket, Recoi_start, MAX_LEN)) {
+
+    char Recoi_start[5];
+
+    switch(nb = read(descripteurSocket, Recoi_start, strlen(Recoi_start))) {
         case -1 :
             perror("Erreur de lecture...");
             close(descripteurSocket);
@@ -65,6 +66,9 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
             return 0;
         default:
+            Recoi_start[nb]='\0';
+            
+            // Boucle de jeu
             while(1){
                 afficheGrille(grille);
                 while (isInGrille(grille,choixLigne,choixCol)==-1 && isEmpty(grille,choixLigne,choixCol)==-1)
@@ -92,7 +96,7 @@ int main(int argc, char *argv[]){
                 }
 
                 char Recoi[2]; 
-                switch(nb = read(descripteurSocket, Recoi, MAX_LEN)) {
+                switch(nb = read(descripteurSocket, Recoi, strlen(Recoi))) {
                     case -1 :
                         perror("Erreur de lecture...");
                         close(descripteurSocket);
