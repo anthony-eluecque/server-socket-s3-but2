@@ -49,8 +49,3 @@ int isEmpty(char grille[3][3],int ligne, int colonne){
 void updateGrille(char grille[3][3],int ligne,int colonne,char type) {
     grille[ligne][colonne] = type;
 }
-
-int main()
-{
-    return 0;
-}
