@@ -54,10 +54,9 @@ int main(int argc, char *argv[]){
     char grille[LIGNES][COLONNES];
     int choixCol = 10,choixLigne = 10;
     initGrille(grille);
+    char Recoi_start[MAX_LEN];
 
-    char Recoi_start[5];
-
-    switch(nb = read(descripteurSocket, Recoi_start, strlen(Recoi_start))) {
+    switch(nb = read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
         case -1 :
             perror("Erreur de lecture...");
             close(descripteurSocket);
@@ -66,8 +65,55 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
             return 0;
         default:
-            Recoi_start[nb]='\0';
-            
+            // Recoi_start[nb]='\0';
+            printf("Client : Lancement Message %s reçu! (%d octets)\n\n", Recoi_start, nb);
+            if (strcmp(Recoi_start,"start")==0){
+                printf("Client : Connexion réussi, début de partie...");
+                while(1){
+                    afficheGrille(grille);
+                    while (isInGrille(grille,choixLigne,choixCol)==-1 && isEmpty(grille,choixLigne,choixCol)==-1)
+                    {
+                        printf("Choisissez une colonne:");
+                        scanf("%d", &choixCol);
+
+                        printf("Choisissez une ligne:");
+                        scanf("%d", &choixLigne);
+                    }   
+                    updateGrille(grille,choixLigne,choixCol,'O');
+                    char Envoi[2] = {choixCol,choixLigne};
+                    // Partie envoie
+                    switch(nb = write(descripteurSocket, &Envoi, sizeof(Envoi))){
+                        case -1 :
+                                perror("Erreur en écriture...");
+                                close(descripteurSocket);
+                                exit(-3);
+                        case 0 : 
+                            fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+                            return 0;
+                        default: 
+                            printf("Client : envoyé! (%d octets)\n\n", nb);
+                            printf("\nColonne envoyé : %d\n",Envoi[0]);
+                            printf("Ligne envoyé : %d\n\n",Envoi[1]);
+                    }
+                    // Partie réception
+                    char Recoi[2]; 
+                    switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
+                        case -1 :
+                            perror("Erreur de lecture...");
+                            close(descripteurSocket);
+                            exit(-4);
+                        case 0 : 
+                        fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+                            return 0;
+                        default:
+                            Recoi[nb]='\0';
+                            printf("Client : Message reçu du serveur : %s (%d octets)\n\n", Recoi, nb);
+                            updateGrille(grille,Recoi[0],Recoi[1],'X');
+                    }
+                }
+
+            }
+
             // Boucle de jeu
             while(1){
                 afficheGrille(grille);
@@ -96,7 +142,7 @@ int main(int argc, char *argv[]){
                 }
 
                 char Recoi[2]; 
-                switch(nb = read(descripteurSocket, Recoi, strlen(Recoi))) {
+                switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
                     case -1 :
                         perror("Erreur de lecture...");
                         close(descripteurSocket);

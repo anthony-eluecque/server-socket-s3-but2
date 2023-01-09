@@ -23,7 +23,8 @@ int main(int argc, char *argv[]){
 
 	int socketDialogue;
 	struct sockaddr_in pointDeRencontreDistant;
-	char messageEnvoi[LG_MESSAGE]; /* le message de la couche Application ! */
+	// char messageEnvoi[LG_MESSAGE]; /* le message de la couche Application ! */
+	char messageEnvoi[] = "start\0";
 	char messageRecu[LG_MESSAGE]; /* le message de la couche Application ! */
 	int ecrits, lus; /* nb d’octets ecrits et lus */
 	int nb;
@@ -43,7 +44,8 @@ int main(int argc, char *argv[]){
 	longueurAdresse = sizeof(pointDeRencontreLocal);
 	// memset sert à faire une copie d'un octet n fois à partir d'une adresse mémoire donnée
 	// ici l'octet 0 est recopié longueurAdresse fois à partir de l'adresse &pointDeRencontreLocal
-	memset(&pointDeRencontreLocal, 0x00, longueurAdresse); pointDeRencontreLocal.sin_family = PF_INET;
+	memset(&pointDeRencontreLocal, 0x00, longueurAdresse); 
+	pointDeRencontreLocal.sin_family = PF_INET;
 	pointDeRencontreLocal.sin_addr.s_addr = htonl(INADDR_ANY); // attaché à toutes les interfaces locales disponibles
 	pointDeRencontreLocal.sin_port = htons(PORT); // = 5000 ou plus
 	
@@ -79,9 +81,7 @@ int main(int argc, char *argv[]){
    			close(socketEcoute);
    			exit(-4);
 		}
-		
-        ecrits = write(socketDialogue, "start", strlen("start"));
-        switch(ecrits){
+        switch(ecrits = write(socketDialogue, &messageEnvoi, sizeof(messageEnvoi))){
             case -1 : /* une erreur ! */
                 perror("write");
                 close(socketDialogue);
@@ -92,10 +92,11 @@ int main(int argc, char *argv[]){
                 return 0;
             default:  /* envoi de n octets */
                 printf("Serveur : Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
-                while (1){
+                
+				while (1){
                     // On réception les données du client (cf. protocole)
-                    lus = read(socketDialogue, messageRecu, LG_MESSAGE*sizeof(char)); // ici appel bloquant
-                    switch(lus) {
+
+                    switch(lus = read(socketDialogue, messageRecu, LG_MESSAGE*sizeof(char))) {
                         case -1 : /* une erreur ! */ 
                             perror("read"); 
                             close(socketDialogue); 
@@ -105,25 +106,24 @@ int main(int argc, char *argv[]){
                             close(socketDialogue);
                             return 0;
                         default:  /* réception de n octets */
-                            printf("Serveur : Message reçu : %s (%d octets)\n\n", messageRecu, lus);
+							printf("Retour après jeu du joueur\n");
+                            printf("Serveur : Message reçu : %d (%d octets)\n\n", messageRecu[0], lus);
                             // On envoie des données vers le client (cf. protocole)
                             updateGrille(grille,messageRecu[0],messageRecu[1],'O');
 
                             choixLigne = 10;
                             choixCol = 10;
-                            while (isInGrille(grille,choixLigne,choixCol)==-1 && isEmpty(grille,choixLigne,choixCol)==-1)
+                            while ((isInGrille(grille,choixLigne,choixCol)==-1) && (isEmpty(grille,choixLigne,choixCol)==-1))
                             {
-                                int choixLigne;
                                 choixLigne = rand() % 3;
-                                int choixCol;
                                 choixCol = rand() % 3;
                             }   
                             updateGrille(grille,choixLigne,choixCol,'X');
 
-                            char Envoi[] = {choixCol,choixLigne};
-
-                            ecrits = write(socketDialogue, Envoi, strlen(Envoi));
-                            switch(ecrits){
+                            char Envoi[2];
+							Envoi[0] = choixCol;
+							Envoi[1] = choixLigne;
+                            switch(ecrits = write(socketDialogue, &Envoi, sizeof(Envoi))){
                                 case -1 : /* une erreur ! */
                                     perror("write");
                                     close(socketDialogue);
@@ -133,7 +133,9 @@ int main(int argc, char *argv[]){
                                     close(socketDialogue);
                                     return 0;
                                 default:  /* envoi de n octets */
-                                    printf("Serveur : Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
+									printf("Fin de boucle ");
+									printf("(%d,%d)",Envoi[0],Envoi[1]);
+                                    printf("Serveur : Message %s envoyé (%d octets)\n\n", Envoi, ecrits);
                                     // On ferme la socket de dialogue et on se replace en attente ...
                             }
                         }

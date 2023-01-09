@@ -33,7 +33,7 @@ int isInGrille(char grille[3][3], int ligne, int colonne)
     if (ligne<0 || ligne>LIGNES-1){
         return -1;
     }
-    if (colonne<0 || ligne>COLONNES-1){
+    if (colonne<0 || colonne>COLONNES-1){
         return -1;
     }
     return 1;
