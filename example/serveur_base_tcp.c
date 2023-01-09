@@ -82,6 +82,7 @@ int main(int argc, char *argv[]){
 			default:  /* réception de n octets */
 				  printf("Message reçu : %s (%d octets)\n\n", messageRecu, lus);
 		}
+		
 
 	}
 	// On ferme la ressource avant de quitter

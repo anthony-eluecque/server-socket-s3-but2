@@ -7,6 +7,7 @@
 #include <netinet/in.h> /* pour struct sockaddr_in */
 #include <arpa/inet.h> /* pour htons et inet_aton */
 
+#define MAX_LEN 256
 int main(int argc, char *argv[]){
 	int descripteurSocket;
 	struct sockaddr_in sockaddrDistant;
@@ -62,6 +63,9 @@ int main(int argc, char *argv[]){
 		exit(-2); // On sort en indiquant un code erreur
 	}
 	printf("Connexion au serveur %s:%d réussie!\n",ip_dest,port_dest);
+	
+	printf("Choix :");
+	scanf("%s", buffer);
 
  	// Envoi du message
 	switch(nb = write(descripteurSocket, buffer, strlen(buffer))){
@@ -74,6 +78,22 @@ int main(int argc, char *argv[]){
 			return 0;
 		default: /* envoi de n octets */
 			printf("Message %s envoyé! (%d octets)\n\n", buffer, nb);
+	}
+
+	fgets(buffer,MAX_LEN,stdin);
+
+	/* Reception des données du serveur */
+	switch(nb = read(descripteurSocket, buffer, MAX_LEN)) {
+		case -1 : /* une erreur ! */
+			perror("Erreur de lecture...");
+			close(descripteurSocket);
+			exit(-4);
+		case 0 : /* la socket est fermée */
+   		fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+			return 0;
+		default: /* réception de n octets */
+		  buffer[nb]='\0';
+			printf("Message reçu du serveur : %s (%d octets)\n\n", buffer, nb);
 	}
 
 	// On ferme la ressource avant de quitter
