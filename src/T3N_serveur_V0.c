@@ -120,9 +120,10 @@ int main(int argc, char *argv[]){
                             }   
                             updateGrille(grille,choixLigne,choixCol,'X');
 
+							afficheGrille(grille);
                             char Envoi[2];
-							Envoi[0] = choixCol;
-							Envoi[1] = choixLigne;
+							Envoi[0] = choixLigne;
+							Envoi[1] = choixCol;
                             switch(ecrits = write(socketDialogue, &Envoi, sizeof(Envoi))){
                                 case -1 : /* une erreur ! */
                                     perror("write");
@@ -134,7 +135,6 @@ int main(int argc, char *argv[]){
                                     return 0;
                                 default:  /* envoi de n octets */
 									printf("Fin de boucle ");
-									printf("(%d,%d)",Envoi[0],Envoi[1]);
                                     printf("Serveur : Message %s envoyé (%d octets)\n\n", Envoi, ecrits);
                                     // On ferme la socket de dialogue et on se replace en attente ...
                             }

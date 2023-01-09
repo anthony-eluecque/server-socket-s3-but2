@@ -22,7 +22,8 @@ int main(int argc, char *argv[]){
 	int nb; /* nb d’octets écrits et lus */
 
 	char ip_dest[16];
-	int  port_dest;
+	int port_dest;
+    int choix;
 
 	if (argc>1) { // si il y a au moins 2 arguments passés en ligne de commande, récupération ip et port
 		strncpy(ip_dest,argv[1],16);
@@ -71,16 +72,24 @@ int main(int argc, char *argv[]){
                 printf("Client : Connexion réussi, début de partie...");
                 while(1){
                     afficheGrille(grille);
-                    while (isInGrille(grille,choixLigne,choixCol)==-1 && isEmpty(grille,choixLigne,choixCol)==-1)
+                    choixCol = 10;
+                    choixLigne = 10;
+                    choix = -1;
+                    while (choix==-1)
                     {
-                        printf("Choisissez une colonne:");
-                        scanf("%d", &choixCol);
+                        printf("Choisissez une colonne: ");
+                        scanf(" %d", &choixCol);
 
-                        printf("Choisissez une ligne:");
-                        scanf("%d", &choixLigne);
+                        printf("Choisissez une ligne: ");
+                        scanf(" %d", &choixLigne);
+
+                        choix = isInGrille(grille,choixLigne,choixCol);
+                        if (choix != -1) {
+                            choix = isEmpty(grille,choixLigne,choixCol);
+                        }
                     }   
                     updateGrille(grille,choixLigne,choixCol,'O');
-                    char Envoi[2] = {choixCol,choixLigne};
+                    char Envoi[2] = {choixLigne,choixCol};
                     // Partie envoie
                     switch(nb = write(descripteurSocket, &Envoi, sizeof(Envoi))){
                         case -1 :
@@ -112,49 +121,6 @@ int main(int argc, char *argv[]){
                     }
                 }
 
-            }
-
-            // Boucle de jeu
-            while(1){
-                afficheGrille(grille);
-                while (isInGrille(grille,choixLigne,choixCol)==-1 && isEmpty(grille,choixLigne,choixCol)==-1)
-                {
-                    printf("Choisissez une colonne:");
-                    scanf("%d", &choixCol);
-
-                    printf("Choisissez une ligne:");
-                    scanf("%d", &choixLigne);
-                }   
-                updateGrille(grille,choixLigne,choixCol,'O');
-                char Envoi[2] = {choixCol,choixLigne};
-                printf("%s",Envoi);
-                
-                switch(nb = write(descripteurSocket, Envoi, strlen(Envoi))){
-                    case -1 :
-                            perror("Erreur en écriture...");
-                            close(descripteurSocket);
-                            exit(-3);
-                    case 0 : 
-                        fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
-                        return 0;
-                    default: 
-                        printf("Client : Message %s envoyé! (%d octets)\n\n", Envoi, nb);
-                }
-
-                char Recoi[2]; 
-                switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
-                    case -1 :
-                        perror("Erreur de lecture...");
-                        close(descripteurSocket);
-                        exit(-4);
-                    case 0 : 
-                    fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
-                        return 0;
-                    default:
-                        Recoi[nb]='\0';
-                        printf("Client : Message reçu du serveur : %s (%d octets)\n\n", Recoi, nb);
-                        updateGrille(grille,Recoi[0],Recoi[1],'X');
-                }
             }
     }
 	close(descripteurSocket);
