@@ -76,9 +76,10 @@ int main(int argc, char *argv[]){
                     scanf("%d", &choixLigne);
                 }   
                 updateGrille(grille,choixLigne,choixCol,'O');
-                char Envoi[] = {choixCol,choixLigne};
+                char Envoi[2] = {choixCol,choixLigne};
+                printf("%s",Envoi);
                 
-                switch(nb = write(descripteurSocket, Envoi, strlen(buffer))){
+                switch(nb = write(descripteurSocket, Envoi, strlen(Envoi))){
                     case -1 :
                             perror("Erreur en écriture...");
                             close(descripteurSocket);
@@ -87,7 +88,7 @@ int main(int argc, char *argv[]){
                         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
                         return 0;
                     default: 
-                        printf("Message %s envoyé! (%d octets)\n\n", Envoi, nb);
+                        printf("Client : Message %s envoyé! (%d octets)\n\n", Envoi, nb);
                 }
 
                 char Recoi[2]; 
@@ -101,7 +102,7 @@ int main(int argc, char *argv[]){
                         return 0;
                     default:
                         Recoi[nb]='\0';
-                        printf("Message reçu du serveur : %s (%d octets)\n\n", Recoi, nb);
+                        printf("Client : Message reçu du serveur : %s (%d octets)\n\n", Recoi, nb);
                         updateGrille(grille,Recoi[0],Recoi[1],'X');
                 }
             }

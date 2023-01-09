@@ -80,7 +80,6 @@ int main(int argc, char *argv[]){
    			exit(-4);
 		}
 		
-
         ecrits = write(socketDialogue, "start", strlen("start"));
         switch(ecrits){
             case -1 : /* une erreur ! */
@@ -92,8 +91,53 @@ int main(int argc, char *argv[]){
                 close(socketDialogue);
                 return 0;
             default:  /* envoi de n octets */
-                printf("Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
-                // On ferme la socket de dialogue et on se replace en attente ...
+                printf("Serveur : Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
+                while (1){
+                    // On réception les données du client (cf. protocole)
+                    lus = read(socketDialogue, messageRecu, LG_MESSAGE*sizeof(char)); // ici appel bloquant
+                    switch(lus) {
+                        case -1 : /* une erreur ! */ 
+                            perror("read"); 
+                            close(socketDialogue); 
+                            exit(-5);
+                        case 0  : /* la socket est fermée */
+                            fprintf(stderr, "La socket a été fermée par le client !\n\n");
+                            close(socketDialogue);
+                            return 0;
+                        default:  /* réception de n octets */
+                            printf("Serveur : Message reçu : %s (%d octets)\n\n", messageRecu, lus);
+                            // On envoie des données vers le client (cf. protocole)
+                            updateGrille(grille,messageRecu[0],messageRecu[1],'O');
+
+                            choixLigne = 10;
+                            choixCol = 10;
+                            while (isInGrille(grille,choixLigne,choixCol)==-1 && isEmpty(grille,choixLigne,choixCol)==-1)
+                            {
+                                int choixLigne;
+                                choixLigne = rand() % 3;
+                                int choixCol;
+                                choixCol = rand() % 3;
+                            }   
+                            updateGrille(grille,choixLigne,choixCol,'X');
+
+                            char Envoi[] = {choixCol,choixLigne};
+
+                            ecrits = write(socketDialogue, Envoi, strlen(Envoi));
+                            switch(ecrits){
+                                case -1 : /* une erreur ! */
+                                    perror("write");
+                                    close(socketDialogue);
+                                    exit(-6);
+                                case 0 :  /* la socket est fermée */
+                                    fprintf(stderr, "La socket a été fermée par le client !\n\n");
+                                    close(socketDialogue);
+                                    return 0;
+                                default:  /* envoi de n octets */
+                                    printf("Serveur : Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
+                                    // On ferme la socket de dialogue et on se replace en attente ...
+                            }
+                        }
+                }
         }
 
 
@@ -102,51 +146,7 @@ int main(int argc, char *argv[]){
 
 
 
-
-		// On réception les données du client (cf. protocole)
-		lus = read(socketDialogue, messageRecu, LG_MESSAGE*sizeof(char)); // ici appel bloquant
-		switch(lus) {
-			case -1 : /* une erreur ! */ 
-				perror("read"); 
-				close(socketDialogue); 
-				exit(-5);
-			case 0  : /* la socket est fermée */
-				fprintf(stderr, "La socket a été fermée par le client !\n\n");
-   				close(socketDialogue);
-   				return 0;
-			default:  /* réception de n octets */
-				printf("Message reçu : %s (%d octets)\n\n", messageRecu, lus);
-				// On envoie des données vers le client (cf. protocole)
-                updateGrille(grille,messageRecu[0],messageRecu[1],'O');
-
-                choixLigne = 10;
-                choixCol = 10;
-                while (isInGrille(grille,choixLigne,choixCol)==-1 && isEmpty(grille,choixLigne,choixCol)==-1)
-                {
-                    int choixLigne;
-                    choixLigne = rand() % 3;
-                    int choixCol;
-                    choixCol = rand() % 3;
-                }   
-				updateGrille(grille,choixLigne,choixCol,'X');
-
-                char Envoi[] = {choixCol,choixLigne};
-
-				ecrits = write(socketDialogue, Envoi, strlen(Envoi));
-				switch(ecrits){
-					case -1 : /* une erreur ! */
-						perror("write");
-						close(socketDialogue);
-						exit(-6);
-					case 0 :  /* la socket est fermée */
-						fprintf(stderr, "La socket a été fermée par le client !\n\n");
-						close(socketDialogue);
-						return 0;
-					default:  /* envoi de n octets */
-						printf("Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
-						// On ferme la socket de dialogue et on se replace en attente ...
-				}
-		}
+        
 	
 
 	}
