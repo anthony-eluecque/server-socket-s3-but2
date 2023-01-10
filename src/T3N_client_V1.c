@@ -60,6 +60,7 @@ int main(int argc, char *argv[]){
     int choixCol = 10,choixLigne = 10;
     initGrille(grille);
     char Recoi_start[MAX_LEN];
+    int choix_2;
 
     switch(nb = read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
         case -1 :
@@ -74,87 +75,163 @@ int main(int argc, char *argv[]){
             printf("Client : Lancement Message %s reçu! (%d octets)\n\n", Recoi_start, nb);
             if (strcmp(Recoi_start,"start")==0){
                 printf("Client : Connexion réussi, début de partie...");
-                while(1){
+                char Color[256];
+                char Color_Adver[2];
 
-                    afficheGrille(grille);
-                    choixCol = 10;
-                    choixLigne = 10;
-                    choix = -1;
-                    while (choix==-1)
-                    {
-                        printf("Choisissez une colonne: ");
-                        scanf(" %d", &choixCol);
-
-                        printf("Choisissez une ligne: ");
-                        scanf(" %d", &choixLigne);
-                        
-                        choix = isInGrille(grille,choixLigne,choixCol);
-                        if (choix != -1) {
-                            choix = isEmpty(grille,choixLigne,choixCol);
+                 switch(read(descripteurSocket, Color, sizeof(Recoi_start))) {
+                    case -1 :
+                        return 0;  
+                    case 0 : 
+                      return 0;  
+                    default:
+                        if (Color[0] == 'X'){
+                            Color_Adver[0] = 'O';
+                        } else {
+                            Color_Adver[0] = 'X';
                         }
-                    }   
-                    updateGrille(grille,choixLigne,choixCol,'X');
-                    char Envoi[2] = {choixLigne,choixCol};
-                    // Partie envoie
-                    switch(nb = write(descripteurSocket, Envoi, sizeof(Envoi))){
-                        case -1 :
-                                perror("Erreur en écriture...");
-                                close(descripteurSocket);
-                                exit(-3);
-                        case 0 : 
-                            fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
-                            return 0;
-                        default: 
-                            printf("Client : envoyé! (%d octets)\n\n", nb);
-                            printf("\nColonne envoyé : %d\n",Envoi[0]);
-                            printf("Ligne envoyé : %d\n\n",Envoi[1]);
-                    }
-                    // Partie réception
-                    // char *Recoi[4]; 
-                    switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
-                        case -1 :
-                            perror("Erreur de lecture...");
-                            close(descripteurSocket);
-                            exit(-4);
-                        case 0 : 
-                        fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
-                            return 0;
-                        default:
-                            printf("Serveur : Message reçu (%d octets) \nMessage %s \n\n", nb, Recoi);
-                            // Les conditions
-                            for (int i=0;i<2;i++){
-                                placement[i] = ' ';
-                                placement[i] = Recoi[i];
-                            }
-                            for (int i=2;i<sizeof(Recoi);i++){
-                                status[i-2] = ' ';
-                                status[i-2] = Recoi[i];     
-                            }
-                
-                            row = 10;
-                            col = 10;
+                        printf("\nReçu : %d %d \n", Color[0], Color_Adver[0]);
+                        char Recoi_2[MAX_LEN];
+                        char Recoi_3[MAX_LEN];
+                        while(1){
+                            switch(read(descripteurSocket, Recoi_2, sizeof(Recoi_2))) {
+                                default:
+                                    printf("----------> %s \n",Recoi_2);
+                                    choix_2 = strcmp(Recoi_2,"attente");
+                                    while (choix_2==0){
+                                        printf("Attente : En attente de l'adversaire\n");
+                                        switch(nb = read(descripteurSocket, Recoi_3, sizeof(Recoi_3))) {
+                                            case -1 :
+                                                perror("Attente : Erreur de lecture...");
+                                                close(descripteurSocket);
+                                                exit(-4);
+                                            case 0 : 
+                                            fprintf(stderr, "Attente : La socket a été fermée par le serveur !\n\n");
+                                                return 0;
+                                            default:
+                                                printf("Attente : Message reçu (%d octets) \nMessage %s \n\n", nb, Recoi_3);
+                                                // Les conditions
+                                                for (int i=0;i<2;i++){
+                                                    placement[i] = ' ';
+                                                    placement[i] = Recoi_3[i];
+                                                }
+                                                for (int i=2;i<sizeof(Recoi_3);i++){
+                                                    status[i-2] = ' ';
+                                                    status[i-2] = Recoi_3[i];     
+                                                }
+                                    
+                                                row = 10;
+                                                col = 10;
 
-                            char stTemp[2];
-                            char stTemp_2[2];
-                        
-                            sprintf(stTemp,"%c",placement[0]);
-                            sprintf(stTemp_2,"%c",placement[1]);
-                            
-                            row = atoi(stTemp);
-                            col = atoi(stTemp_2);
-                    
-                            // strcpy
-                            printf("Voici le placement row : %d et col %d\n",row,col);
-                            printf("Voici le status : %s\n",status);
-                            if (strcmp(status,"continue")==0){
-                                updateGrille(grille,row,col,'O');
-                            }
-                            else{
-                                printf("%s","Le client se ferme\n");
-                                close(descripteurSocket);
-                                exit(0);
-                            }
-                    }
+                                                char stTemp[2];
+                                                char stTemp_2[2];
+                                            
+                                                sprintf(stTemp,"%c",placement[0]);
+                                                sprintf(stTemp_2,"%c",placement[1]);
+                                                
+                                                row = atoi(stTemp);
+                                                col = atoi(stTemp_2);
+                                        
+                                                // strcpy
+                                                // Recoi_start[MAX_LEN] = "attente\0"
+                                                printf("Attente : Reçu : Voici le placement row : %d et col %d\n",row,col);
+                                                printf("Attente : Reçu : Voici le status : %s\n",status);
+                                                if (strcmp(status,"continue")==0){
+                                                    updateGrille(grille,row,col,Color_Adver[0]);
+                                                }
+                                                else{
+                                                    printf("%s","Attente : Le client se ferme\n");
+                                                    close(descripteurSocket);
+                                                    exit(0);
+                                                }
+                                                strcpy(Recoi_2,"nonattente\0");
+                                                choix_2 = 1;
+                                                printf("JE SORS DE l'attente\n");
+                                        }
+                                    }
+                                    // switch(read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
+                                    afficheGrille(grille);
+                                    choixCol = 10;
+                                    choixLigne = 10;
+                                    choix = -1;
+                                    while (choix==-1)
+                                    {
+                                        printf("Choisissez une colonne: ");
+                                        scanf(" %d", &choixCol);
+
+                                        printf("Choisissez une ligne: ");
+                                        scanf(" %d", &choixLigne);
+                                        
+                                        choix = isInGrille(grille,choixLigne,choixCol);
+                                        if (choix != -1) {
+                                            choix = isEmpty(grille,choixLigne,choixCol);
+                                        }
+                                    }   
+                                    updateGrille(grille,choixLigne,choixCol,Color[0]);
+                                    char Envoi[2] = {choixLigne,choixCol};
+                                    // Partie envoie
+                                    switch(nb = write(descripteurSocket, Envoi, sizeof(Envoi))){
+                                        case -1 :
+                                                perror("Erreur en écriture...");
+                                                close(descripteurSocket);
+                                                exit(-3);
+                                        case 0 : 
+                                            fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+                                            return 0;
+                                        default: 
+                                            printf("Client : envoyé! (%d octets)\n\n", nb);
+                                            printf("\nColonne envoyé : %d\n",Envoi[0]);
+                                            printf("Ligne envoyé : %d\n\n",Envoi[1]);
+                                    }
+                                    // Partie réception
+                                    // char *Recoi[4]; 
+                                    
+                                    switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
+                                        case -1 :
+                                            perror("Erreur de lecture...");
+                                            close(descripteurSocket);
+                                            exit(-4);
+                                        case 0 : 
+                                        fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+                                            return 0;
+                                        default:
+                                            printf("\n-------> En dehors Boucle Recoi \n");
+                                            printf("Serveur : Message reçu (%d octets) \nMessage %s \n\n", nb, Recoi);
+                                            // Les conditions
+                                            for (int i=0;i<2;i++){
+                                                placement[i] = ' ';
+                                                placement[i] = Recoi[i];
+                                            }
+                                            for (int i=2;i<sizeof(Recoi);i++){
+                                                status[i-2] = ' ';
+                                                status[i-2] = Recoi[i];     
+                                            }
+                                
+                                            row = 10;
+                                            col = 10;
+
+                                            char stTemp[2];
+                                            char stTemp_2[2];
+                                        
+                                            sprintf(stTemp,"%c",placement[0]);
+                                            sprintf(stTemp_2,"%c",placement[1]);
+                                            
+                                            row = atoi(stTemp);
+                                            col = atoi(stTemp_2);
+                                    
+                                            // strcpy
+                                            printf("Voici le placement row : %d et col %d\n",row,col);
+                                            printf("Voici le status : %s\n",status);
+                                            if (strcmp(status,"continue")==0){
+                                                updateGrille(grille,row,col,Color[0]);
+                                            }
+                                            else{
+                                                printf("%s","Client : Le client se ferme\n");
+                                                close(descripteurSocket);
+                                                exit(0);
+                                            }
+                                    }
+                            }  
+                        }
                 }
 
             }

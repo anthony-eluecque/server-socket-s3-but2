@@ -10,9 +10,10 @@
 #include "Utils.c"
 #include "Utils_serveur.c"
 
+#define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 4500 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 4525 // = 4500 (ports >= 4500 réservés pour usage explicite)
 
 #define LG_MESSAGE 256
 
@@ -21,8 +22,10 @@ int main(int argc, char *argv[]){
 
 	struct sockaddr_in pointDeRencontreLocal;
 	socklen_t longueurAdresse;
+	
+	int connectSocket[50];
 
-	int socketDialogue;
+	int socketDialogue_joueur0,socketDialogue_joueurX;
 	struct sockaddr_in pointDeRencontreDistant;
 	// char messageEnvoi[LG_MESSAGE]; /* le message de la couche Application ! */
 	char messageEnvoi[] = "start\0";
@@ -33,12 +36,17 @@ int main(int argc, char *argv[]){
     int choix;
 	char MSGCol[11];
 	char MSGLigne[11];
+	int autre;
+	char attente[LG_MESSAGE] = "attente\0";
+	char attente_non[LG_MESSAGE] = "nonattente\0";
 
 	// char Message[LG_MESSAGE][LG_MESSAGE];
 
 	char result[LG_MESSAGE];
 	char Message[11];
 	strcpy(Message,"continue");
+
+
 
 	// Crée un socket de communication
 	socketEcoute = socket(PF_INET, SOCK_STREAM, 0); 
@@ -51,6 +59,7 @@ int main(int argc, char *argv[]){
 
 	// Remplissage de sockaddrDistant (structure sockaddr_in identifiant le point d'écoute local)
 	longueurAdresse = sizeof(pointDeRencontreLocal);
+	printf("%d",longueurAdresse);
 	// memset sert à faire une copie d'un octet n fois à partir d'une adresse mémoire donnée
 	// ici l'octet 0 est recopié longueurAdresse fois à partir de l'adresse &pointDeRencontreLocal
 	memset(&pointDeRencontreLocal, 0x00, longueurAdresse); 
@@ -63,7 +72,14 @@ int main(int argc, char *argv[]){
 		perror("bind");
 		exit(-2); 
 	}
-	printf("Socket attachée avec succès !\n");
+	printf("Socket 0 attachée avec succès !\n");
+
+
+	// if((bind(socketEcoute_joueurX, (struct sockaddr *)&pointDeRencontreLocal, longueurAdresse)) < 0) {
+	// 	perror("bind");
+	// 	exit(-2); 
+	// }
+	// printf("Socket X attachée avec succès !\n");
 
 	// On fixe la taille de la file d’attente à 5 (pour les demandes de connexion non encore traitées)
 	if(listen(socketEcoute, 5) < 0){
@@ -72,117 +88,160 @@ int main(int argc, char *argv[]){
 	}
 	printf("Socket placée en écoute passive ...\n");
 
-	// boucle d’attente de connexion : en théorie, un serveur attend indéfiniment !
     char grille[LIGNES][COLONNES];
     int choixCol = 10;
     int choixLigne = 10;
     initGrille(grille);
 
+	int joueur_actuel = 0;
+	// boucle d’attente de connexion : en théorie, un serveur attend indéfiniment !
 	while(1){
 		memset(messageRecu, 0x00, LG_MESSAGE*sizeof(char));
 		printf("Attente d’une demande de connexion (quitter avec Ctrl-C)\n\n");
-		
+
+
 		// c’est un appel bloquant
-		socketDialogue = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
-		if (socketDialogue < 0) {
+		connectSocket[joueur_actuel] = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
+		if (connectSocket[joueur_actuel] < 0) {
    			perror("accept");
-			close(socketDialogue);
-   			close(socketEcoute);
+			close(connectSocket[joueur_actuel]);
    			exit(-4);
 		}
-        switch(ecrits = write(socketDialogue, &messageEnvoi, sizeof(messageEnvoi))){
-            case -1 : /* une erreur ! */
-                perror("write");
-                close(socketDialogue);
-                exit(-6);
-            case 0 :  /* la socket est fermée */
-                fprintf(stderr, "La socket a été fermée par le client !\n\n");
-                close(socketDialogue);
-                return 0;
-            default:  /* envoi de n octets */
-                printf("Serveur : Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
-                
-				while (1){
-                    // On réception les données du client (cf. protocole)
+		joueur_actuel = joueur_actuel + 1;
+		// On commence dès qu'on a deux joueurs
+		if (joueur_actuel == 2){
+			int tour = 0;
+			char joueurJouer = 'O';
+			char joueurEnFace = 'X';
+			char temp = 'Z';
+			joueur_actuel = 0;
+			autre = 1;
+			while(1) {
+				switch(ecrits = write(connectSocket[joueur_actuel], &messageEnvoi, sizeof(messageEnvoi))){
+					case -1 : /* une erreur ! */
+						perror("write");
+						close(connectSocket[joueur_actuel]);
+						exit(-6);
+					case 0 :  /* la socket est fermée */
+						fprintf(stderr, "La socket a été fermée par le client !\n\n");
+						close(connectSocket[joueur_actuel]);
+						return 0;
+					default:  /* envoi de n octets */
+						printf("Serveur : Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
 
-                    switch(lus = read(socketDialogue, messageRecu, LG_MESSAGE*sizeof(char))) {
-                        case -1 : /* une erreur ! */ 
-                            perror("read"); 
-                            close(socketDialogue); 
-                            exit(-5);
-                        case 0  : /* la socket est fermée */
-                            fprintf(stderr, "La socket a été fermée par le client !\n\n");
-                            close(socketDialogue);
-                            return 0;
-                        default:  /* réception de n octets */
-							printf("Retour après jeu du joueur\n");
-                            printf("Serveur : Message reçu : %d (%d octets)\n\n", messageRecu[0], lus);
-                            // On envoie des données vers le client (cf. protocole)
+						char c1 = 'X';
+						char c2 = 'O';
+						write(connectSocket[autre], &messageEnvoi, sizeof(messageEnvoi));
+						write(connectSocket[0],&c1,sizeof(c1));
+						write(connectSocket[1],&c2,sizeof(c2));
+						while (1){
+							temp = joueurEnFace;
+							joueurEnFace = joueurJouer;
+							joueurJouer = temp;
+							if (joueur_actuel == 0){
+								autre = 1;
+							} else {
+								autre = 0;
+							}
+							printf("---------->   %d,%d",joueur_actuel,autre);
+							write(connectSocket[joueur_actuel], attente_non, sizeof(attente_non));
+							write(connectSocket[autre], attente, sizeof(attente));
+							// printf("Joueur en non-attente : %d\n",joueur_actuel);
+							// printf("Joueur en attente : %d\n",aut²re);
+							// On réception les données du client (cf. protocole)
+							switch(lus = read(connectSocket[joueur_actuel], messageRecu, LG_MESSAGE*sizeof(char))) {
+								case -1 : /* une erreur ! */ 
+									perror("read"); 
+   									close(connectSocket[0]);
+									close(connectSocket[1]);
+									exit(-5);
+								case 0  : /* la socket est fermée */
+									fprintf(stderr, "La socket a été fermée par le client !\n\n");
+									close(connectSocket[0]);
+									close(connectSocket[1]);
+									return 0;
+								default:  /* réception de n octets */
+									printf("Retour après jeu du joueur\n");
+									printf("Serveur : Message reçu : %d (%d octets)\n\n", messageRecu[0], lus);
+									// On envoie des données vers le client (cf. protocole)
 
-                            updateGrille(grille,messageRecu[0],messageRecu[1],'X');
-							if (grillePleine(grille)==-1) {
-								// Message[] = "Xend\0";
-								strcpy(Message,"Xend");
-							} else  {
-								if (checkWin(grille,'X')==1) {
-									strcpy(Message,"Xwins");
-								} else {
-									choixLigne = 10;
-                            		choixCol = 10;
-									choix = -1;
-									while (choix == -1) {
-										choixLigne = rand() % 3;
-										choixCol = rand() % 3;
-										choix = isInGrille(grille,choixLigne,choixCol);
-										if (choix != -1) {
-											choix = isEmpty(grille,choixLigne,choixCol);
-										}
-									}   
-									updateGrille(grille,choixLigne,choixCol,'O');
-
+									updateGrille(grille,messageRecu[0],messageRecu[1],joueurJouer);
 									afficheGrille(grille);
-											
-									if (checkWin(grille,'O')==1) {
-										strcpy(Message,"Owins");
+
+									char fusionJoueur[256] = "";
+									if (grillePleine(grille)==-1) {
+										strcat(fusionJoueur,&joueurJouer);
+										strcat(fusionJoueur,"end");
+										strcpy(Message,fusionJoueur);
+									} 
+									else if (checkWin(grille,joueurJouer)==1) {
+										strcat(fusionJoueur,&joueurJouer);
+										strcat(fusionJoueur,"wins");
+										strcpy(Message,fusionJoueur);
+									}
+									
+									MSGCol[0] = ' ';
+									MSGLigne[0] = ' ';
+									sprintf(MSGCol,"%d",messageRecu[0]);
+									sprintf(MSGLigne,"%d",messageRecu[1]);
+									strcat(MSGLigne,MSGCol);
+									strcat(MSGLigne,Message);
+					
+								
+									printf("Changement : %c %c", joueurJouer, joueurEnFace);
+									
+
+									switch(ecrits = write(connectSocket[joueur_actuel], MSGLigne, sizeof(MSGLigne))){
+										case -1 : /* une erreur ! */
+											perror("write");
+											close(connectSocket[0]);
+											close(connectSocket[1]);
+											exit(-6);
+										case 0 :  /* la socket est fermée */
+											fprintf(stderr, "La socket a été fermée par le client !\n\n");
+											close(connectSocket[0]);
+											close(connectSocket[1]);
+											return 0;
+										default:  /* envoi de n octets */
+											printf("Serveur : Message envoyé à %d (%d octets) \nStatus %s \nCol : %c \nLigne : %c\n\n",joueur_actuel,ecrits,MSGLigne,MSGLigne[0],MSGLigne[1]);
+											// On ferme la socket de dialogue et on se replace en attente ...
+									}
+									
+									
+									switch(ecrits = write(connectSocket[autre], MSGLigne, sizeof(MSGLigne))){
+										case -1 : /* une erreur ! */
+											perror("write");
+											close(connectSocket[0]);
+											close(connectSocket[1]);
+											exit(-6);
+										case 0 :  /* la socket est fermée */
+											fprintf(stderr, "La socket a été fermée par le client !\n\n");
+											close(connectSocket[0]);
+											close(connectSocket[1]);
+											return 0;
+										default:  /* envoi de n octets */
+											printf("Serveur : Message envoyé à %d (%d octets) \nStatus %s \nCol : %c \nLigne : %c\n\n",autre,ecrits,MSGLigne,MSGLigne[0],MSGLigne[1]);
+											// On ferme la socket de dialogue et on se replace en attente ...
+									}
+									if (strcmp(Message,"continue")!=0){
+										printf("JE ME FERME\n");
+										close(connectSocket[0]);
+										close(connectSocket[1]);
+										exit(0);
+									}
+									if (joueur_actuel == 1){
+										joueur_actuel = 0;
 									} else {
-										if (grillePleine(grille)==-1) {
-											strcpy(Message,"Owins");
-										}
+										joueur_actuel = 1;
 									}
 								}
-							}
-							MSGCol[0] = ' ';
-							MSGLigne[0] = ' ';
-							sprintf(MSGCol,"%d",choixCol);
-							sprintf(MSGLigne,"%d",choixLigne);
-							strcat(MSGLigne,MSGCol);
-							strcat(MSGLigne,Message);
-			
-
-                            switch(ecrits = write(socketDialogue, MSGLigne, sizeof(MSGLigne))){
-                                case -1 : /* une erreur ! */
-                                    perror("write");
-                                    close(socketDialogue);
-                                    exit(-6);
-                                case 0 :  /* la socket est fermée */
-                                    fprintf(stderr, "La socket a été fermée par le client !\n\n");
-                                    close(socketDialogue);
-                                    return 0;
-                                default:  /* envoi de n octets */
-                                    printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %c \nLigne : %c\n\n",ecrits,MSGLigne,MSGLigne[0],MSGLigne[1]);
-                                    // On ferme la socket de dialogue et on se replace en attente ...
-							}
-							if (strcmp(Message,"continue")!=0){
-								printf("JE ME FERME\n");
-								close(socketDialogue);
-								close(socketEcoute);
-								exit(0);
-                            }
-                        }
-                }
-        }
+						}
+				}
+			}
+		}
 	}
 	// On ferme la ressource avant de quitter
-   	close(socketEcoute);
+   	close(connectSocket[0]);
+	close(connectSocket[1]);
 	return 0; 
 }
