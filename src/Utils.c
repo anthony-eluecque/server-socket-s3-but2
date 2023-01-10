@@ -34,11 +34,9 @@ int isInGrille(char grille[3][3], int ligne, int colonne)
 {
     printf("%d,%d",ligne,colonne);
     if ((ligne<0) || (ligne>=LIGNES)){
-        printf("%s","En dehors du tab");
         return -1;
     }
     if ((colonne<0) || (colonne>=COLONNES)){
-        printf("%s","En dehors du tab");
         return -1;
     }
     return 1;

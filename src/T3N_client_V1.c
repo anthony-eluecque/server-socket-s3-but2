@@ -21,10 +21,13 @@ int main(int argc, char *argv[]){
 
 	char buffer[]="Hello server!"; // buffer stockant le message
 	int nb; /* nb d’octets écrits et lus */
-    char Recoi[MAX_LEN];
+    char Recoi[256];
 	char ip_dest[16];
 	int port_dest;
     int choix;
+    char status[9];
+    char placement[MAX_LEN];
+    int row,col;
 
 	if (argc>1) { // si il y a au moins 2 arguments passés en ligne de commande, récupération ip et port
 		strncpy(ip_dest,argv[1],16);
@@ -72,6 +75,7 @@ int main(int argc, char *argv[]){
             if (strcmp(Recoi_start,"start")==0){
                 printf("Client : Connexion réussi, début de partie...");
                 while(1){
+
                     afficheGrille(grille);
                     choixCol = 10;
                     choixLigne = 10;
@@ -89,10 +93,10 @@ int main(int argc, char *argv[]){
                             choix = isEmpty(grille,choixLigne,choixCol);
                         }
                     }   
-                    updateGrille(grille,choixLigne,choixCol,'O');
+                    updateGrille(grille,choixLigne,choixCol,'X');
                     char Envoi[2] = {choixLigne,choixCol};
                     // Partie envoie
-                    switch(nb = write(descripteurSocket, &Envoi, sizeof(Envoi))){
+                    switch(nb = write(descripteurSocket, Envoi, sizeof(Envoi))){
                         case -1 :
                                 perror("Erreur en écriture...");
                                 close(descripteurSocket);
@@ -116,17 +120,40 @@ int main(int argc, char *argv[]){
                         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
                             return 0;
                         default:
-                            // printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %d \nLigne : %d: \n\n",ecrits, Msg.status,Msg.col,Msg.ligne);
-                            
-                            printf("Reçoi :  %c %c %c",Recoi[0],Recoi[1],Recoi[2]);
+                            printf("Serveur : Message reçu (%d octets) \nMessage %s \n\n", nb, Recoi);
                             // Les conditions
-                            // if (strcmp(Msg.status,"continue")!=0){
-                            //     updateGrille(grille,Msg.ligne,Msg.col,'X');
-                            // }
-                            // else{
-                            //     close(descripteurSocket);
-                            //     exit(0);
-                            // }
+                            for (int i=0;i<2;i++){
+                                placement[i] = ' ';
+                                placement[i] = Recoi[i];
+                            }
+                            for (int i=2;i<sizeof(Recoi);i++){
+                                status[i-2] = ' ';
+                                status[i-2] = Recoi[i];     
+                            }
+                
+                            row = 10;
+                            col = 10;
+
+                            char stTemp[2];
+                            char stTemp_2[2];
+                        
+                            sprintf(stTemp,"%c",placement[0]);
+                            sprintf(stTemp_2,"%c",placement[1]);
+                            
+                            row = atoi(stTemp);
+                            col = atoi(stTemp_2);
+                    
+                            // strcpy
+                            printf("Voici le placement row : %d et col %d\n",row,col);
+                            printf("Voici le status : %s\n",status);
+                            if (strcmp(status,"continue")==0){
+                                updateGrille(grille,row,col,'O');
+                            }
+                            else{
+                                printf("%s","Le client se ferme\n");
+                                close(descripteurSocket);
+                                exit(0);
+                            }
                     }
                 }
 

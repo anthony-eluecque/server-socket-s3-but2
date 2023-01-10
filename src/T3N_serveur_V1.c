@@ -12,7 +12,7 @@
 
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 4501 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 4500 // = 4500 (ports >= 4500 réservés pour usage explicite)
 
 #define LG_MESSAGE 256
 
@@ -30,11 +30,14 @@ int main(int argc, char *argv[]){
 	int ecrits, lus; /* nb d’octets ecrits et lus */
 	int nb;
 	int retour;
+    int choix;
+	char MSGCol[11];
+	char MSGLigne[11];
 
 	// char Message[LG_MESSAGE][LG_MESSAGE];
 
 	char result[LG_MESSAGE];
-	char Message[9];
+	char Message[11];
 	strcpy(Message,"continue");
 
 	// Crée un socket de communication
@@ -115,9 +118,8 @@ int main(int argc, char *argv[]){
 							printf("Retour après jeu du joueur\n");
                             printf("Serveur : Message reçu : %d (%d octets)\n\n", messageRecu[0], lus);
                             // On envoie des données vers le client (cf. protocole)
-                            updateGrille(grille,messageRecu[0],messageRecu[1],'O');
 
-
+                            updateGrille(grille,messageRecu[0],messageRecu[1],'X');
 							if (grillePleine(grille)==-1) {
 								// Message[] = "Xend\0";
 								strcpy(Message,"Xend");
@@ -127,17 +129,20 @@ int main(int argc, char *argv[]){
 								} else {
 									choixLigne = 10;
                             		choixCol = 10;
-									while ((isInGrille(grille,choixLigne,choixCol)==-1) && (isEmpty(grille,choixLigne,choixCol)==-1)) {
+									choix = -1;
+									while (choix == -1) {
 										choixLigne = rand() % 3;
 										choixCol = rand() % 3;
+										choix = isInGrille(grille,choixLigne,choixCol);
+										if (choix != -1) {
+											choix = isEmpty(grille,choixLigne,choixCol);
+										}
 									}   
-									updateGrille(grille,choixLigne,choixCol,'X');
+									updateGrille(grille,choixLigne,choixCol,'O');
 
-								
 									afficheGrille(grille);
 											
 									if (checkWin(grille,'O')==1) {
-										printf("%s","----------> 8");
 										strcpy(Message,"Owins");
 									} else {
 										if (grillePleine(grille)==-1) {
@@ -146,18 +151,15 @@ int main(int argc, char *argv[]){
 									}
 								}
 							}
-
-							char MSGCol[LG_MESSAGE];
-							char MSGLigne[LG_MESSAGE];
-							
-							sprintf(MSGCol,"%c",choixCol);
-							sprintf(MSGLigne,"%c",choixLigne);
-							strcat(MSGCol,MSGLigne);
-							strcat(Message,MSGCol);
+							MSGCol[0] = ' ';
+							MSGLigne[0] = ' ';
+							sprintf(MSGCol,"%d",choixCol);
+							sprintf(MSGLigne,"%d",choixLigne);
+							strcat(MSGLigne,MSGCol);
+							strcat(MSGLigne,Message);
 			
-							puts(Message);
 
-                            switch(ecrits = write(socketDialogue, Message, sizeof(Message))){
+                            switch(ecrits = write(socketDialogue, MSGLigne, sizeof(MSGLigne))){
                                 case -1 : /* une erreur ! */
                                     perror("write");
                                     close(socketDialogue);
@@ -167,11 +169,11 @@ int main(int argc, char *argv[]){
                                     close(socketDialogue);
                                     return 0;
                                 default:  /* envoi de n octets */
-                                    printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %c \nLigne : %c: \n\n",ecrits,Message,choixCol,choixLigne);
+                                    printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %c \nLigne : %c\n\n",ecrits,MSGLigne,MSGLigne[0],MSGLigne[1]);
                                     // On ferme la socket de dialogue et on se replace en attente ...
 							}
 							if (strcmp(Message,"continue")!=0){
-								printf("JE ME FERME");
+								printf("JE ME FERME\n");
 								close(socketDialogue);
 								close(socketEcoute);
 								exit(0);
