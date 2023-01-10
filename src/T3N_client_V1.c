@@ -121,7 +121,7 @@ int main(int argc, char *argv[]){
                         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
                             return 0;
                         default:
-                            printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %d \nLigne : %d: \n\n",ecrits, Msg.status,Msg.col,Msg.ligne);
+                            printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %d \nLigne : %d: \n\n",nb, Msg.status,Msg.col,Msg.ligne);
                             
                             // Les conditions
                             if (strcmp(Msg.status,"continue")!=0){
