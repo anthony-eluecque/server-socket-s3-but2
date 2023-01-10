@@ -13,11 +13,6 @@
 #define COLONNES 3
 #define LIGNES 3
 
-struct Message {
-	int col;
-	int ligne;
-	char *status;
-} Msg;
 
 int main(int argc, char *argv[]){
 	int descripteurSocket;
@@ -26,7 +21,7 @@ int main(int argc, char *argv[]){
 
 	char buffer[]="Hello server!"; // buffer stockant le message
 	int nb; /* nb d’octets écrits et lus */
-    char Recoi[3];
+    char Recoi[MAX_LEN];
 	char ip_dest[16];
 	int port_dest;
     int choix;
@@ -112,7 +107,7 @@ int main(int argc, char *argv[]){
                     }
                     // Partie réception
                     // char *Recoi[4]; 
-                    switch(nb = read(descripteurSocket, Msg, sizeof(Msg))) {
+                    switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
                         case -1 :
                             perror("Erreur de lecture...");
                             close(descripteurSocket);
@@ -121,16 +116,17 @@ int main(int argc, char *argv[]){
                         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
                             return 0;
                         default:
-                            printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %d \nLigne : %d: \n\n",nb, Msg.status,Msg.col,Msg.ligne);
+                            // printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %d \nLigne : %d: \n\n",ecrits, Msg.status,Msg.col,Msg.ligne);
                             
+                            printf("Reçoi :  %c %c %c",Recoi[0],Recoi[1],Recoi[2]);
                             // Les conditions
-                            if (strcmp(Msg.status,"continue")!=0){
-                                updateGrille(grille,Msg.ligne,Msg.col,'X');
-                            }
-                            else{
-                                close(descripteurSocket);
-                                exit(0);
-                            }
+                            // if (strcmp(Msg.status,"continue")!=0){
+                            //     updateGrille(grille,Msg.ligne,Msg.col,'X');
+                            // }
+                            // else{
+                            //     close(descripteurSocket);
+                            //     exit(0);
+                            // }
                     }
                 }
 
