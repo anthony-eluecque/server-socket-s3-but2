@@ -24,6 +24,8 @@ int main(int argc, char *argv[]){
     char Recoi[256];
 	char ip_dest[16];
 	int port_dest;
+
+    /* Initialisation des message de reàu et d'envoi */
     int choix;
     char status[9];
     char placement[MAX_LEN];
@@ -53,56 +55,88 @@ int main(int argc, char *argv[]){
 		close(descripteurSocket);
 		exit(-2); // On sort en indiquant un code erreur
 	}
+
 	printf("Connexion au serveur %s:%d réussie!\n",ip_dest,port_dest);
 
-
+    /* Initialisation de la grille */
     char grille[LIGNES][COLONNES];
+
+    /* Initialisation de la colonne et la ligne */
     int choixCol = 10,choixLigne = 10;
+
+    /* Initialisation de la grille */
     initGrille(grille);
+
+    /* Initialisation des messages de reçu */
     char Recoi_start[MAX_LEN];
     int choix_2;
 
+    /* Réception de la partie qui start ou non */
     switch(nb = read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
-        case -1 :
+        case -1 : /* une erreur ! */
             perror("Erreur de lecture...");
             close(descripteurSocket);
             exit(-4);
-        case 0 : 
-        fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+        case 0 : /* la socket est fermée */
+            fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
             return 0;
         default:
-            // Recoi_start[nb]='\0';
-            // printf("Client : Lancement Message %s reçu! (%d octets)\n\n", Recoi_start, nb);
+            /* Condition qui permet de savoir si le jeu commence ou non */
             if (strcmp(Recoi_start,"start")==0){
                 printf("Client : Connexion réussi, début de partie...\n");
+
+                /* Variable de symbole actuel du joueur */
                 char Color[256];
+
+                /* Variable de symbole de l'adversaire */
                 char Color_Adver[2];
+
+                /* Attente d'une seconde pour que la transmission se passe bien */
                 sleep(1);
-                 switch(read(descripteurSocket, Color, sizeof(Recoi_start))) {
+
+                /* Réception du symbole actuel du joueur */
+                switch(read(descripteurSocket, Color, sizeof(Recoi_start))) {
                     case -1 :
                         return 0;  
                     case 0 : 
                       return 0;  
                     default:
+                        /* Insertion du symbole du joueur et de l'adversaire */
                         if (Color[0] == 'X'){
                             Color_Adver[0] = 'O';
                         } else {
                             Color_Adver[0] = 'X';
                         }
+
                         printf("\n\nVous êtes la pièce : %c \n et l'adversaire est : %c \n\n", Color[0], Color_Adver[0]);
+
+                        /* Initialisation des message de reçu */
                         char Recoi_2[MAX_LEN];
                         char Recoi_3[MAX_LEN];
+
+                        /* Boucle de jeu */
                         while(1){
+
+                            /* Affichage de la grille */
                             afficheGrille(grille);
                             printf("\nEn attente d'une instruction du serveur... \n");
+
+                            /* Attente d'une seconde pour que la transmission se passe bien */
                             sleep(1);
+
+                            /* Réception de l'information si le joueur attend ou non */
                             switch(read(descripteurSocket, Recoi_2, sizeof(Recoi_2))) {
                                 default:
-                                    // printf("----------> %s \n",Recoi_2);
+
+                                    /* Variable de condition si c'est bien attente ou nonattente */
                                     choix_2 = strcmp(Recoi_2,"attente");
+
+                                    /* Boucle qui permet au client de rester dedans s'il est en attente */
                                     while (choix_2==0){
                                         printf("Attente : En attente de l'adversaire\n");
                                         sleep(1);
+
+                                        /* Réception des coordonnées que l'adversaire a mis */
                                         switch(nb = read(descripteurSocket, Recoi_3, sizeof(Recoi_3))) {
                                             case -1 :
                                                 perror("Attente : Erreur de lecture...");
@@ -112,8 +146,7 @@ int main(int argc, char *argv[]){
                                             fprintf(stderr, "Attente : La socket a été fermée par le serveur !\n\n");
                                                 return 0;
                                             default:
-                                                // printf("Attente : Message reçu (%d octets) \nMessage %s \n\n", nb, Recoi_3);
-                                                // Les conditions
+                                                /* Vérification si l'emplacement est vide ou non */
                                                 for (int i=0;i<2;i++){
                                                     placement[i] = ' ';
                                                     placement[i] = Recoi_3[i];
@@ -122,27 +155,31 @@ int main(int argc, char *argv[]){
                                                     status[i-2] = ' ';
                                                     status[i-2] = Recoi_3[i];     
                                                 }
-                                    
+
+                                                /* Valeur par défaut de la ligne et de la colonne */
                                                 row = 10;
                                                 col = 10;
 
+                                                /* Initialisation des valeur temporaires de placement */
                                                 char stTemp[2];
                                                 char stTemp_2[2];
-                                            
+
+                                                /* Insertion des valeur de placement dans les deux variables temporaires */
                                                 sprintf(stTemp,"%c",placement[0]);
                                                 sprintf(stTemp_2,"%c",placement[1]);
-                                                
+
+                                                /* Convertion char en int */
                                                 row = atoi(stTemp);
                                                 col = atoi(stTemp_2);
                                         
-                                                // strcpy
-                                                // Recoi_start[MAX_LEN] = "attente\0"
+                                                
                                                 printf("Attente : Reçu : Voici le placement row : %d et col %d\n",row,col);
-                                                // printf("Attente : Reçu : Voici le status : %s\n",status);
+                                                
+                                                /* Condition si l'utilisateur continue ou non */
                                                 if (strcmp(status,"continue")==0){
                                                     updateGrille(grille,row,col,Color_Adver[0]);
                                                 }
-                                                else{
+                                                else{ /* Le client a perdu */
                                                     updateGrille(grille,row,col,Color_Adver[0]);
                                                     printf("%s","Nous vous souhaitons une bonne journée.\n");
                                                     afficheGrille(grille);
@@ -154,7 +191,8 @@ int main(int argc, char *argv[]){
                                                 }
                                                 strcpy(Recoi_2,"nonattente\0");
                                                 choix_2 = 1;
-                                                // printf("JE SORS DE l'attente\n");
+                                                /* Sortie de la boucle */
+                                                
                                                 printf("\nEn attente d'une instruction du serveur... \n");
                                                 switch(nb = read(descripteurSocket, Recoi_3, sizeof(Recoi_3))) {
                                                     default:
@@ -162,10 +200,16 @@ int main(int argc, char *argv[]){
                                                 }
                                         }
                                     }
-                                    // switch(read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
+                                    
+                                    
+                                    /* Affichage de la grille */
                                     afficheGrille(grille);
+
+                                    /* Valeurs par défaut de la ligne et colonne */
                                     choixCol = 10;
                                     choixLigne = 10;
+
+                                    /* Valeur par défaut de notre choix */
                                     choix = -1;
                                     while (choix==-1)
                                     {
@@ -174,32 +218,34 @@ int main(int argc, char *argv[]){
 
                                         printf("\nChoisissez une ligne: ");
                                         scanf(" %d", &choixLigne);
-                                        
+                                        /* Condition s'il est dans la grille ou non */
                                         choix = isInGrille(grille,choixLigne,choixCol);
-                                        if (choix != -1) {
+                                        if (choix != -1) { /* Si non, alors on vérifie si la grille est vide */
                                             choix = isEmpty(grille,choixLigne,choixCol);
                                         }
                                     }   
+
+                                    /* Mise à jour de la grille */
                                     updateGrille(grille,choixLigne,choixCol,Color[0]);
                                     char Envoi[2] = {choixLigne,choixCol};
-                                    // Partie envoie
+                                    // Envoi des coordonnées au serveur */
                                     switch(nb = write(descripteurSocket, Envoi, sizeof(Envoi))){
-                                        case -1 :
+                                        case -1 : /* Erreur */
                                                 perror("Erreur en écriture...");
                                                 close(descripteurSocket);
                                                 exit(-3);
-                                        case 0 : 
+                                        case 0 : /* Socket fermé ! */
                                             fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
                                             return 0;
-                                        default: 
-                                            // printf("Client : envoyé! (%d octets)\n\n", nb);
+                                        default:  /* Réception de n octets */
                                             printf("\nColonne envoyé : %d\n",Envoi[0]);
                                             printf("Ligne envoyé : %d\n\n",Envoi[1]);
                                     }
-                                    // Partie réception
-                                    // char *Recoi[4]; 
+                                    
                                     sleep(2);
                                     printf("\nEn attente d'une instruction du serveur... \n");
+
+                                    /* Réception du résultat du serveur */
                                     switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
                                         case -1 :
                                             perror("Erreur de lecture...");
@@ -209,11 +255,12 @@ int main(int argc, char *argv[]){
                                         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
                                             return 0;
                                         default:
-                                            // printf("Serveur : Message reçu (%d octets) \n\n", nb, Recoi);
+                                            /* Vérification s'il n'y a pas eu un bug */
                                             if (strcmp(Recoi,"nonattente")==0){
                                                 printf("\n\nErreur j'ai reçu le code d'autre chose...\n\n");
                                             }
-                                            // Les conditions
+                                            
+                                            /* Vérification si l'emplacement est vide ou non */
                                             for (int i=0;i<2;i++){
                                                 placement[i] = ' ';
                                                 placement[i] = Recoi[i];
@@ -223,35 +270,42 @@ int main(int argc, char *argv[]){
                                                 status[i-2] = Recoi[i];     
                                             }
                                 
+                                            /* Valeur par défaut de la ligne et de la colonne */
                                             row = 10;
                                             col = 10;
 
+                                            /* Initialisation des valeur temporaires de placement */
                                             char stTemp[2];
                                             char stTemp_2[2];
-                                        
+
+                                            /* Insertion des valeur de placement dans les deux variables temporaires */
                                             sprintf(stTemp,"%c",placement[0]);
                                             sprintf(stTemp_2,"%c",placement[1]);
-                                            
+
+                                            /* Convertion char en int */
                                             row = atoi(stTemp);
                                             col = atoi(stTemp_2);
                                     
-                                            // strcpy
+                                            
                                             printf("\nVoici le placement row : %d et col %d\n",row,col);
-                                            // printf("Voici le status : %s\n",status);
+                                            
+                                             /* Condition si l'utilisateur continue ou non */
                                             if (strcmp(status,"continue")==0){
                                                 updateGrille(grille,row,col,Color[0]);
                                             }
-                                            else{
+                                            else{ /* Le client a gagné ou  perdu */
                                                 printf("%s","Nous vous souhaitons une bonne journée.\n");
                                                 afficheGrille(grille);
-                                                if ((strcmp(status,"Xwins")==0) || (strcmp(status,"Owins")==0)){
-                                                    printf("\n\n\nVous avez gané !!!!\n\n\n");
+                                                if ((strcmp(status,"Xwins")==0) || (strcmp(status,"Owins")==0)){ 
+                                                    printf("\n\n\nVous avez gané !!!!\n\n\n"); /* Le client a gagné */
                                                 } else {
-                                                    printf("\n\n\nVous avez perdu.\n\n\n");
+                                                    printf("\n\n\nVous avez perdu.\n\n\n"); /* Le client a perdu */
                                                 }
-                                                close(descripteurSocket);
+                                                close(descripteurSocket); /* Fermeture du descripteur */
                                                 exit(0);
                                             }
+
+                                            /* Attente d'une seconde pour que la transmission se passe bien */
                                             sleep(1);
                                     }
                             }  
@@ -260,6 +314,8 @@ int main(int argc, char *argv[]){
 
             }
     }
+    
+    /* Fermeture du descripteur */
 	close(descripteurSocket);
 
 	return 0;
