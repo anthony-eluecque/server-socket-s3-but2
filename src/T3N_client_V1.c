@@ -77,7 +77,7 @@ int main(int argc, char *argv[]){
                 printf("Client : Connexion réussi, début de partie...");
                 char Color[256];
                 char Color_Adver[2];
-
+                sleep(1);
                  switch(read(descripteurSocket, Color, sizeof(Recoi_start))) {
                     case -1 :
                         return 0;  
@@ -89,16 +89,20 @@ int main(int argc, char *argv[]){
                         } else {
                             Color_Adver[0] = 'X';
                         }
-                        printf("\nReçu : %d %d \n", Color[0], Color_Adver[0]);
+                        printf("\nReçu : %c %c \n", Color[0], Color_Adver[0]);
                         char Recoi_2[MAX_LEN];
                         char Recoi_3[MAX_LEN];
                         while(1){
+                            afficheGrille(grille);
+                            printf("%s","En attente du read...");
+                            sleep(1);
                             switch(read(descripteurSocket, Recoi_2, sizeof(Recoi_2))) {
                                 default:
                                     printf("----------> %s \n",Recoi_2);
                                     choix_2 = strcmp(Recoi_2,"attente");
                                     while (choix_2==0){
                                         printf("Attente : En attente de l'adversaire\n");
+                                        sleep(1);
                                         switch(nb = read(descripteurSocket, Recoi_3, sizeof(Recoi_3))) {
                                             case -1 :
                                                 perror("Attente : Erreur de lecture...");
@@ -146,6 +150,10 @@ int main(int argc, char *argv[]){
                                                 strcpy(Recoi_2,"nonattente\0");
                                                 choix_2 = 1;
                                                 printf("JE SORS DE l'attente\n");
+                                                switch(nb = read(descripteurSocket, Recoi_3, sizeof(Recoi_3))) {
+                                                    default:
+                                                        printf("Reçu : %s",Recoi_3);
+                                                }
                                         }
                                     }
                                     // switch(read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
@@ -184,7 +192,7 @@ int main(int argc, char *argv[]){
                                     }
                                     // Partie réception
                                     // char *Recoi[4]; 
-                                    
+                                    sleep(2);
                                     switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
                                         case -1 :
                                             perror("Erreur de lecture...");
@@ -196,6 +204,9 @@ int main(int argc, char *argv[]){
                                         default:
                                             printf("\n-------> En dehors Boucle Recoi \n");
                                             printf("Serveur : Message reçu (%d octets) \nMessage %s \n\n", nb, Recoi);
+                                            if (strcmp(Recoi,"nonattente")==0){
+                                                printf("Erreur j'ai reçu le code d'autre chose...\n\n");
+                                            }
                                             // Les conditions
                                             for (int i=0;i<2;i++){
                                                 placement[i] = ' ';
@@ -229,6 +240,7 @@ int main(int argc, char *argv[]){
                                                 close(descripteurSocket);
                                                 exit(0);
                                             }
+                                            sleep(1);
                                     }
                             }  
                         }

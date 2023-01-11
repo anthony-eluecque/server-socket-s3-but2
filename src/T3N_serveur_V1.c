@@ -13,7 +13,7 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 4525 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 45279 // = 4500 (ports >= 4500 réservés pour usage explicite)
 
 #define LG_MESSAGE 256
 
@@ -131,8 +131,11 @@ int main(int argc, char *argv[]){
 
 						char c1 = 'X';
 						char c2 = 'O';
+						sleep(1);
 						write(connectSocket[autre], &messageEnvoi, sizeof(messageEnvoi));
+
 						write(connectSocket[0],&c1,sizeof(c1));
+						sleep(1);
 						write(connectSocket[1],&c2,sizeof(c2));
 						while (1){
 							temp = joueurEnFace;
@@ -143,9 +146,13 @@ int main(int argc, char *argv[]){
 							} else {
 								autre = 0;
 							}
-							printf("---------->   %d,%d",joueur_actuel,autre);
-							write(connectSocket[joueur_actuel], attente_non, sizeof(attente_non));
-							write(connectSocket[autre], attente, sizeof(attente));
+							printf("---------->   %d,%d \n",joueur_actuel,autre);
+							write(connectSocket[joueur_actuel], &attente_non, sizeof(attente_non));
+							sleep(1);
+							printf("----> %s %s \n", attente_non, attente);
+							write(connectSocket[autre], &attente, sizeof(attente));
+							printf("--------> ENVOI A : %d", connectSocket[joueur_actuel]);
+							printf("--------> ENVOI A : %d", connectSocket[autre]);
 							// printf("Joueur en non-attente : %d\n",joueur_actuel);
 							// printf("Joueur en attente : %d\n",aut²re);
 							// On réception les données du client (cf. protocole)
@@ -182,16 +189,15 @@ int main(int argc, char *argv[]){
 									
 									MSGCol[0] = ' ';
 									MSGLigne[0] = ' ';
-									sprintf(MSGCol,"%d",messageRecu[0]);
-									sprintf(MSGLigne,"%d",messageRecu[1]);
+									sprintf(MSGCol,"%d",messageRecu[1]);
+									sprintf(MSGLigne,"%d",messageRecu[0]);
 									strcat(MSGLigne,MSGCol);
 									strcat(MSGLigne,Message);
 					
 								
-									printf("Changement : %c %c", joueurJouer, joueurEnFace);
+									printf("Changement : %c %c \n", joueurJouer, joueurEnFace);
 									
-
-									switch(ecrits = write(connectSocket[joueur_actuel], MSGLigne, sizeof(MSGLigne))){
+									switch(ecrits = write(connectSocket[joueur_actuel], &MSGLigne, sizeof(MSGLigne))){
 										case -1 : /* une erreur ! */
 											perror("write");
 											close(connectSocket[0]);
@@ -205,10 +211,10 @@ int main(int argc, char *argv[]){
 										default:  /* envoi de n octets */
 											printf("Serveur : Message envoyé à %d (%d octets) \nStatus %s \nCol : %c \nLigne : %c\n\n",joueur_actuel,ecrits,MSGLigne,MSGLigne[0],MSGLigne[1]);
 											// On ferme la socket de dialogue et on se replace en attente ...
+											
 									}
-									
-									
-									switch(ecrits = write(connectSocket[autre], MSGLigne, sizeof(MSGLigne))){
+									sleep(1);
+									switch(ecrits = write(connectSocket[autre], &MSGLigne, sizeof(MSGLigne))){
 										case -1 : /* une erreur ! */
 											perror("write");
 											close(connectSocket[0]);
@@ -220,9 +226,10 @@ int main(int argc, char *argv[]){
 											close(connectSocket[1]);
 											return 0;
 										default:  /* envoi de n octets */
-											printf("Serveur : Message envoyé à %d (%d octets) \nStatus %s \nCol : %c \nLigne : %c\n\n",autre,ecrits,MSGLigne,MSGLigne[0],MSGLigne[1]);
+											printf("Serveur : Message envoyé à %d (%d octets) \nStatus %s \nCol : %c \nLigne : %c\n\n",connectSocket[autre],ecrits,MSGLigne,MSGLigne[0],MSGLigne[1]);
 											// On ferme la socket de dialogue et on se replace en attente ...
 									}
+								
 									if (strcmp(Message,"continue")!=0){
 										printf("JE ME FERME\n");
 										close(connectSocket[0]);
@@ -234,7 +241,9 @@ int main(int argc, char *argv[]){
 									} else {
 										joueur_actuel = 1;
 									}
-								}
+									printf("\n\nAttente d'une nouvelle manche....\n\n");
+									sleep(3);
+							}
 						}
 				}
 			}
