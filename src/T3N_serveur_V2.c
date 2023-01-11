@@ -9,6 +9,7 @@
 #include <time.h>
 #include "Utils.c"
 #include "Utils_serveur.c"
+#include "Utils_socket.c"
 
 #define NB_JOUEURS 2
 #define COLONNES 3
@@ -21,40 +22,6 @@
 // 			CORION GAUTHIER		   //
 // --------------------------------//
 //   BUT 2 : SAE Système et réseau //
-
-int createListenSocket()
-{
-	int socketEcoute = socket(PF_INET, SOCK_STREAM, 0); 
-	// Teste la valeur renvoyée par l’appel système socket() 
-	if(socketEcoute < 0){
-		perror("socket"); // Affiche le message d’erreur 
-	exit(-1); // On sort en indiquant un code erreur
-	}
-	printf("Socket créée avec succès ! (%d)\n", socketEcoute); // On prépare l’adresse d’attachement locale
-	return socketEcoute;
-}
-
-
-// Procédure permettant de demander l'attachement local du socket
-void attachementLocalSocket(int socketEcoute,struct sockaddr_in pointDeRencontreLocal ,socklen_t longueurAdresse)
-{
-	// On demande l’attachement local du socket
-	if((bind(socketEcoute, (struct sockaddr *)&pointDeRencontreLocal, longueurAdresse)) < 0) {
-		perror("bind");
-		exit(-2); 
-	}
-	printf("Socket 0 attachée avec succès !\n");
-}
-
-void fixFileSocket(int socketEcoute,int taille_file)
-{
-	// On fixe la taille de la file d’attente à 5 (pour les demandes de connexion non encore traitées)
-	if(listen(socketEcoute, taille_file) < 0){
-   		perror("listen");
-   		exit(-3);
-	}
-	printf("Socket placée en écoute passive ...\n");
-}
 
 int main(int argc, char *argv[]){
 
