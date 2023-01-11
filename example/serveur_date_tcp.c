@@ -6,10 +6,38 @@
 #include <string.h> /* pour memset */
 #include <netinet/in.h> /* pour struct sockaddr_in */
 #include <arpa/inet.h> /* pour htons et inet_aton */
+#include <time.h>
 
-#define PORT IPPORT_USERRESERVED // = 5000 (ports >= 5000 réservés pour usage explicite)
+#define PORT 4500 // = 5000 (ports >= 5000 réservés pour usage explicite)
 
 #define LG_MESSAGE 256
+
+
+void lire_heure(char* heure)
+{
+	FILE *fpipe;
+	fpipe = popen("date +'%T'","r");
+	if (fpipe==NULL){
+		perror("popen");
+		exit(-1);
+	}
+	fgets(heure,LG_MESSAGE,fpipe);
+	pclose(fpipe);
+	
+}
+
+void lire_date(char* date)
+{
+	FILE *fpipe;
+	fpipe = popen("date","r");
+	if (fpipe==NULL){
+		perror("popen");
+		exit(-1);
+	}	
+	fgets(date,LG_MESSAGE,fpipe);
+	pclose(fpipe);
+}
+
 
 int main(int argc, char *argv[]){
 	int socketEcoute;
@@ -19,9 +47,12 @@ int main(int argc, char *argv[]){
 
 	int socketDialogue;
 	struct sockaddr_in pointDeRencontreDistant;
+	char messageEnvoi[LG_MESSAGE]; /* le message de la couche Application ! */
 	char messageRecu[LG_MESSAGE]; /* le message de la couche Application ! */
 	int ecrits, lus; /* nb d’octets ecrits et lus */
+	int nb;
 	int retour;
+	char result[80];
 
 	// Crée un socket de communication
 	socketEcoute = socket(PF_INET, SOCK_STREAM, 0); 
@@ -72,17 +103,50 @@ int main(int argc, char *argv[]){
 		lus = read(socketDialogue, messageRecu, LG_MESSAGE*sizeof(char)); // ici appel bloquant
 		switch(lus) {
 			case -1 : /* une erreur ! */ 
-				  perror("read"); 
-				  close(socketDialogue); 
-				  exit(-5);
+				perror("read"); 
+				close(socketDialogue); 
+				exit(-5);
 			case 0  : /* la socket est fermée */
-				  fprintf(stderr, "La socket a été fermée par le client !\n\n");
-   				  close(socketDialogue);
-   				  return 0;
+				fprintf(stderr, "La socket a été fermée par le client !\n\n");
+   				close(socketDialogue);
+   				return 0;
 			default:  /* réception de n octets */
-				  printf("Message reçu : %s (%d octets)\n\n", messageRecu, lus);
+				printf("Message reçu : %s (%d octets)\n\n", messageRecu, lus);
+				// On envoie des données vers le client (cf. protocole)
+				if (strcmp(messageRecu,"date")==0)
+				{
+					lire_date(result);
+					sprintf(messageEnvoi, "%s",result);
+				}
+				else if (strcmp(messageRecu,"heure")==0)
+				{
+					lire_heure(result);
+					sprintf(messageEnvoi,"%s",result);
+				}			
+				else
+				{
+					sprintf(messageEnvoi,"Veuillez retanter un nouveau message");
+					exit(-6);
+				}	
+
+				
+				ecrits = write(socketDialogue, messageEnvoi, strlen(messageEnvoi));
+				switch(ecrits){
+					case -1 : /* une erreur ! */
+						perror("write");
+						close(socketDialogue);
+						exit(-6);
+					case 0 :  /* la socket est fermée */
+						fprintf(stderr, "La socket a été fermée par le client !\n\n");
+						close(socketDialogue);
+						return 0;
+					default:  /* envoi de n octets */
+						printf("Message %s envoyé (%d octets)\n\n", messageEnvoi, ecrits);
+						// On ferme la socket de dialogue et on se replace en attente ...
+						close(socketDialogue);
+				}
 		}
-		
+	
 
 	}
 	// On ferme la ressource avant de quitter
