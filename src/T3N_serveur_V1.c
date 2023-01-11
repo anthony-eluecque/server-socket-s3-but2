@@ -193,7 +193,7 @@ int main(int argc, char *argv[]){
 
 							/* condition s'il continue ou non la parite */
 							if (strcmp(Message,"continue")!=0){
-								printf("JE ME FERME\n");
+								printf("Fin du jeu\n");
 								close(socketDialogue);
 								close(socketEcoute);
 								exit(0);
