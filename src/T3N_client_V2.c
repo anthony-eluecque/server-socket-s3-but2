@@ -6,8 +6,8 @@
 #include <string.h> /* pour memset */
 #include <netinet/in.h> /* pour struct sockaddr_in */
 #include <arpa/inet.h> /* pour htons et inet_aton */
-#include "Utils.c"
-#include "Utils_serveur.c"
+#include "./utils/Utils.c"
+#include "./utils/Utils_serveur.c"
 
 #define MAX_LEN 256
 #define COLONNES 3

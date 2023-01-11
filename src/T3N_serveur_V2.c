@@ -7,14 +7,14 @@
 #include <netinet/in.h> /* pour struct sockaddr_in */
 #include <arpa/inet.h> /* pour htons et inet_aton */
 #include <time.h>
-#include "Utils.c"
-#include "Utils_serveur.c"
-#include "Utils_socket.c"
+#include "./utils/Utils.c"
+#include "./utils/Utils_serveur.c"
+#include "./utils/Utils_socket_serveur.c"
 
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 5003 // = 5000 (ports >= 5000 réservés pour usage explicite)
+#define PORT 5004 // = 5000 (ports >= 5000 réservés pour usage explicite)
 #define LG_MESSAGE 256
 
 // --------------------------------//
