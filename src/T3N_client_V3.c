@@ -77,6 +77,23 @@ int main(int argc, char *argv[]){
         default:
             // Recoi_start[nb]='\0';
             // printf("Client : Lancement Message %s reçu! (%d octets)\n\n", Recoi_start, nb);
+            if (strcmp(Recoi_start,"Vous êtes dans la file d'attente")==0){
+                while(1) {
+                    printf("\nBienvenue en tant que spectateur de la partie !\n");
+                    printf("\nVous êtes en attente d'une fin de manche...\n");
+                    switch(nb = read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
+                        case -1 :
+                            perror("Erreur de lecture...");
+                            close(descripteurSocket);
+                            exit(-4);
+                        case 0 : 
+                        fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+                            return 0;
+                        default:
+                            printf("%s", Recoi_start);
+                    }
+                }
+            }
             if (strcmp(Recoi_start,"start")==0){
                 printf("Client : Connexion réussi, début de partie...\n");
                 char Color[256];
