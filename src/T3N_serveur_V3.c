@@ -6,6 +6,7 @@
 #include <string.h> /* pour memset */
 #include <netinet/in.h> /* pour struct sockaddr_in */
 #include <arpa/inet.h> /* pour htons et inet_aton */
+#include <sys/ioctl.h>
 #include <time.h>
 #include "Utils.c"
 #include "Utils_serveur.c"
@@ -13,20 +14,21 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 45282 // = 4500 (ports >= 4500 réservés pour usage explicite)
-
+#define PORT 4530 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define SOL_TCP 6
 #define LG_MESSAGE 256
 
 int main(int argc, char *argv[]){
 	int socketEcoute;
 
-	struct sockaddr_in pointDeRencontreLocal;
+	struct sockaddr_in pointDeRencontreLocal, cli1_addr;
 	socklen_t longueurAdresse;
+	int sockfd, new_sockfd;
 	
 	int connectSocket[50];
 
 	int socketDialogue_joueur0,socketDialogue_joueurX;
-	struct sockaddr_in pointDeRencontreDistant;
+	struct sockaddr_in pointDeRencontreDistant, cli2_addr;
 	// char messageEnvoi[LG_MESSAGE]; /* le message de la couche Application ! */
 	char messageEnvoi[] = "start\0";
 	char messageRecu[LG_MESSAGE]; /* le message de la couche Application ! */
@@ -45,6 +47,8 @@ int main(int argc, char *argv[]){
 	char result[LG_MESSAGE];
 	char Message[11];
 	strcpy(Message,"continue");
+	socklen_t len;
+    int qlen;
 
 
 
@@ -74,18 +78,16 @@ int main(int argc, char *argv[]){
 	}
 	printf("Socket 0 attachée avec succès !\n");
 
-
-	// if((bind(socketEcoute_joueurX, (struct sockaddr *)&pointDeRencontreLocal, longueurAdresse)) < 0) {
-	// 	perror("bind");
-	// 	exit(-2); 
-	// }
-	// printf("Socket X attachée avec succès !\n");
-
 	// On fixe la taille de la file d’attente à 5 (pour les demandes de connexion non encore traitées)
 	if(listen(socketEcoute, 5) < 0){
    		perror("listen");
    		exit(-3);
 	}
+	// clilen = sizeof(cli1_addr);
+	// FD_ZERO(&readfds);
+	// 						/* Ajout de sockfd à readfds */
+	// FD_SET(socketEcoute, &readfds);
+	// int max_fd = socketEcoute;
 	printf("Socket placée en écoute passive ...\n");
 
     char grille[LIGNES][COLONNES];
@@ -115,6 +117,7 @@ int main(int argc, char *argv[]){
 			char joueurEnFace = 'X';
 			char temp = 'Z';
 			joueur_actuel = 0;
+			int nombreClient = joueur_actuel;
 			autre = 1;
 			while(1) {
 				switch(ecrits = write(connectSocket[joueur_actuel], &messageEnvoi, sizeof(messageEnvoi))){
@@ -137,7 +140,39 @@ int main(int argc, char *argv[]){
 						write(connectSocket[0],&c1,sizeof(c1));
 						sleep(1);
 						write(connectSocket[1],&c2,sizeof(c2));
+						int temp = 0;
 						while (1){
+							temp = nombreClient+1;
+							printf("test");
+							// len = sizeof(qlen);
+    						// getsockopt(socketEcoute, SOL_TCP, TCP_SYNCNT, &qlen, &len);
+							ioctl(socketEcoute, FIONREAD, &qlen);
+							printf("\nTaille : %d\n",qlen);
+							if (qlen > 0) {
+								/* Connexion en attente */
+								printf("Une connexion est en attente\n");
+								/* Accepter la connexion */
+								/* ... */
+							} else {
+								/* Pas de connexion en attente */
+								printf("Aucune connexion en attente\n");
+							}
+
+							// /* Vérifier si une connexion est en attente */
+							// if (FD_ISSET(socketEcoute, &readfds)) {
+							// 	/* Accepter la connexion */
+							// 	printf("test3");
+							// 	new_sockfd = accept(socketEcoute, (struct sockaddr *) &cli1_addr, &clilen);
+							// 	/* Traitement de la connexion */
+							// 	/* ... */
+							// }
+							// printf("test4");
+							// if(sizeof(socketEcoute) >= 0){
+							// 	memset(messageRecu, 0x00, LG_MESSAGE*sizeof(char));
+							// 	connectSocket[temp] = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
+							// 	printf("\nConnexion acceptée !\n");
+							// }
+							
 							temp = joueurEnFace;
 							joueurEnFace = joueurJouer;
 							joueurJouer = temp;
