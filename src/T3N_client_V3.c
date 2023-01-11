@@ -144,6 +144,7 @@ int main(int argc, char *argv[]){
                                                 }
                                                 else{
                                                     printf("%s","Nous vous souhaitons une bonne journée.\n");
+                                                    afficheGrille(grille);
                                                     printf("\n\n\nVous avez perdu.\n\n\n");
                                                     close(descripteurSocket);
                                                     exit(0);
@@ -241,6 +242,7 @@ int main(int argc, char *argv[]){
                                             }
                                             else{
                                                 printf("%s","Nous vous souhaitons une bonne journée.\n");
+                                                afficheGrille(grille);
                                                 if ((strcmp(status,"Xwins")==0) || (strcmp(status,"Owins")==0)){
                                                     printf("\n\n\nVous avez gané !!!!\n\n\n");
                                                 } else {
