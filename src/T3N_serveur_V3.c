@@ -14,7 +14,7 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 4530 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 4532 // = 4500 (ports >= 4500 réservés pour usage explicite)
 #define SOL_TCP 6
 #define LG_MESSAGE 256
 
@@ -23,6 +23,7 @@ int main(int argc, char *argv[]){
 
 	struct sockaddr_in pointDeRencontreLocal, cli1_addr;
 	socklen_t longueurAdresse;
+	fd_set read_fd_set;
 	int sockfd, new_sockfd;
 	
 	int connectSocket[50];
@@ -39,6 +40,9 @@ int main(int argc, char *argv[]){
 	char MSGCol[11];
 	char MSGLigne[11];
 	int autre;
+	char buffer[2];
+	char c;
+	FILE* fichier = NULL;
 	char attente[LG_MESSAGE] = "attente\0";
 	char attente_non[LG_MESSAGE] = "nonattente\0";
 
@@ -98,7 +102,9 @@ int main(int argc, char *argv[]){
 
 	int joueur_actuel = 0;
 	// boucle d’attente de connexion : en théorie, un serveur attend indéfiniment !
-	while(1){
+	int ret_val;
+	if (fork() > 1) {
+		while(1){
 		memset(messageRecu, 0x00, LG_MESSAGE*sizeof(char));
 		printf("Attente d’une demande de connexion (quitter avec Ctrl-C)\n\n");
 
@@ -112,7 +118,10 @@ int main(int argc, char *argv[]){
 		}
 		joueur_actuel = joueur_actuel + 1;
 		// On commence dès qu'on a deux joueurs
+
 		if (joueur_actuel == 2){
+				
+			
 			int tour = 0;
 			char joueurJouer = 'O';
 			char joueurEnFace = 'X';
@@ -147,44 +156,18 @@ int main(int argc, char *argv[]){
 						}
 						while (1){
 							temp = nombreClient+1;
-							printf("test");
-							// len = sizeof(qlen);
-    						// getsockopt(socketEcoute, SOL_TCP, TCP_SYNCNT, &qlen, &len);
-							// ioctl(socketEcoute, FIONREAD, &qlen);
-
-							if (fork()) {
-								fichier = fopen("test.fic", "w");
-								fwrite("A", 1, 1, fichier);
-								fwrite("B", 1, 1, fichier);
-								fclose(fichier);
-								sleep(2);
-								fichier = fopen("test.fic", "r");
-								// while((c=fgetc(fichier))!=EOF){
-								//     printf("%c",c);
-								// }
-								c = fread(&buffer, sizeof(char), 2, fichier);
-								printf("Les valeurs lues: %s \n", buffer);
-								fclose(fichier);
-
-							} else {
-								sleep(1);
-								fichier = fopen("test.fic", "r");
-								// while((c=fgetc(fichier))!=EOF){
-								//     printf("%c",c);
-								// }
-								c = fread(&buffer, sizeof(char), 2, fichier);
-								printf("Les valeurs lues: %s \n", buffer);
-								fclose(fichier);
-								fichier = fopen("test.fic", "w");
-								fwrite("C", 1, 1, fichier);
-								fwrite("D", 1, 1, fichier);
-								fclose(fichier);
-							}
+							printf("test\n");
 
 							
 
+							fichier = fopen("skylord.fr", "r");
 
-							printf("\nTaille : %d\n",qlen);
+							c = fread(&buffer, sizeof(char), 2, fichier);
+							printf("Les valeurs lues: %s \n", buffer);
+							fclose(fichier);
+							fichier = fopen("skylord.fr", "w");
+							fwrite("A", 1, 1, fichier);
+							fclose(fichier);
 							if (qlen > 0) {
 								/* Connexion en attente */
 								printf("Une connexion est en attente\n");
@@ -317,8 +300,17 @@ int main(int argc, char *argv[]){
 									sleep(3);
 							}
 						}
+					}
 				}
 			}
+		}
+	} else {
+		while (1){
+			ret_val = select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL);
+			fichier = fopen("skylord.fr", "w");
+			fwrite("A", 1, 1, fichier);
+			fclose(fichier);
+			sleep(1);
 		}
 	}
 	// On ferme la ressource avant de quitter
