@@ -14,7 +14,7 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 4541 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 4545 // = 4500 (ports >= 4500 réservés pour usage explicite)
 #define SOL_TCP 6
 #define LG_MESSAGE 256
 
@@ -104,15 +104,20 @@ int main(int argc, char *argv[]){
 	// boucle d’attente de connexion : en théorie, un serveur attend indéfiniment !
 	int ret_val;
 	char Retvall[] = "1\0"; 
-	if (fork()==0) {
+	if (fork()>0) {
 		while (1) {
 			printf("\nEn attente d'un spectateur...\n");
 			sleep(1);
 			ret_val = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
+			if (ret_val < 0) {
+				perror("accept");
+				close(ret_val);
+				exit(-4);
+			}
 			fichier = fopen("skylord.fr", "w");
 			sprintf(Retvall,"%d",ret_val);
 			printf("%s",Retvall);
-			fwrite(Retvall, 1, 1, fichier);
+			fwrite(Retvall, sizeof(int), 1, fichier);
 			fclose(fichier);
 		}
 	} else {
@@ -123,15 +128,15 @@ int main(int argc, char *argv[]){
 
 			// c’est un appel bloquant
 			connectSocket[joueur_actuel] = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
-			printf("Nouveau : %d",connectSocket[joueur_actuel]);
 			if (connectSocket[joueur_actuel] < 0) {
 				perror("accept");
 				close(connectSocket[joueur_actuel]);
 				exit(-4);
 			}
+			sleep(1);
 			joueur_actuel = joueur_actuel + 1;
 			// On commence dès qu'on a deux joueurs
-
+			printf("Nouveau : %d %d\n",connectSocket[joueur_actuel],joueur_actuel);
 			if (joueur_actuel == 2){
 					
 				
