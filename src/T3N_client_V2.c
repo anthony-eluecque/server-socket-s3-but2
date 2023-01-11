@@ -14,6 +14,8 @@
 #define LIGNES 3
 
 
+
+
 int main(int argc, char *argv[]){
 	int descripteurSocket;
 	struct sockaddr_in sockaddrDistant;

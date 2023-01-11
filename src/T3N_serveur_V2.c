@@ -13,86 +13,96 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 45283 // = 4500 (ports >= 4500 réservés pour usage explicite)
-
+#define PORT 5003 // = 5000 (ports >= 5000 réservés pour usage explicite)
 #define LG_MESSAGE 256
 
-int main(int argc, char *argv[]){
-	int socketEcoute;
+// --------------------------------//
+// 			ELUECQUE ANTHONY       //
+// 			CORION GAUTHIER		   //
+// --------------------------------//
+//   BUT 2 : SAE Système et réseau //
 
-	struct sockaddr_in pointDeRencontreLocal;
-	socklen_t longueurAdresse;
-	
-	int connectSocket[50];
-
-	int socketDialogue_joueur0,socketDialogue_joueurX;
-	struct sockaddr_in pointDeRencontreDistant;
-	// char messageEnvoi[LG_MESSAGE]; /* le message de la couche Application ! */
-	char messageEnvoi[] = "start\0";
-	char messageRecu[LG_MESSAGE]; /* le message de la couche Application ! */
-	int ecrits, lus; /* nb d’octets ecrits et lus */
-	int nb; /* Octet lu */
-	int retour; /* Message de retour */
-    int choix; 
-	char MSGCol[11]; /* Le choix de la colonne */
-	char MSGLigne[11]; /* Le choix de la ligne */
-	int autre; 
-	char attente[LG_MESSAGE] = "attente\0"; /* Message d'attente */
-	char attente_non[LG_MESSAGE] = "nonattente\0"; /* Message de non attente */
-
-	// char Message[LG_MESSAGE][LG_MESSAGE];
-
-	char result[LG_MESSAGE]; /* message de résultat */
-	char Message[11]; /* Le message d'envoi */
-	strcpy(Message,"continue"); /* Copie par défaut du message continue */
-
-
-
-	// Crée un socket de communication
-	socketEcoute = socket(PF_INET, SOCK_STREAM, 0); 
+int createListenSocket()
+{
+	int socketEcoute = socket(PF_INET, SOCK_STREAM, 0); 
 	// Teste la valeur renvoyée par l’appel système socket() 
 	if(socketEcoute < 0){
 		perror("socket"); // Affiche le message d’erreur 
 	exit(-1); // On sort en indiquant un code erreur
 	}
 	printf("Socket créée avec succès ! (%d)\n", socketEcoute); // On prépare l’adresse d’attachement locale
+	return socketEcoute;
+}
 
-	// Remplissage de sockaddrDistant (structure sockaddr_in identifiant le point d'écoute local)
+
+// Procédure permettant de demander l'attachement local du socket
+void attachementLocalSocket(int socketEcoute,struct sockaddr_in pointDeRencontreLocal ,socklen_t longueurAdresse)
+{
+	// On demande l’attachement local du socket
+	if((bind(socketEcoute, (struct sockaddr *)&pointDeRencontreLocal, longueurAdresse)) < 0) {
+		perror("bind");
+		exit(-2); 
+	}
+	printf("Socket 0 attachée avec succès !\n");
+}
+
+void fixFileSocket(int socketEcoute,int taille_file)
+{
+	// On fixe la taille de la file d’attente à 5 (pour les demandes de connexion non encore traitées)
+	if(listen(socketEcoute, taille_file) < 0){
+   		perror("listen");
+   		exit(-3);
+	}
+	printf("Socket placée en écoute passive ...\n");
+}
+
+int main(int argc, char *argv[]){
+
+	struct sockaddr_in pointDeRencontreLocal;
+	socklen_t longueurAdresse;
+	
+	int connectSocket[50];
+	struct sockaddr_in pointDeRencontreDistant;
+
+	char messageEnvoi[] = "start\0";  /* le message de la couche Application ! */
+	char messageRecu[LG_MESSAGE]; /* le message de la couche Application ! */
+	
+	int socketEcoute,ecrits,lus,nb,retour,autre; 
+	/* ecrits & lus = nb d’octets ecrits et lus */
+	/* nb =  Octet lu */
+	/* retour Message de retour */
+	/* autre = L'autre joueur */
+	// Partie création serveur
 	longueurAdresse = sizeof(pointDeRencontreLocal);
-	printf("%d",longueurAdresse);
+	// Crée un socket de communication
+	socketEcoute = createListenSocket();
 	// memset sert à faire une copie d'un octet n fois à partir d'une adresse mémoire donnée
 	// ici l'octet 0 est recopié longueurAdresse fois à partir de l'adresse &pointDeRencontreLocal
 	memset(&pointDeRencontreLocal, 0x00, longueurAdresse); 
 	pointDeRencontreLocal.sin_family = PF_INET;
 	pointDeRencontreLocal.sin_addr.s_addr = htonl(INADDR_ANY); // attaché à toutes les interfaces locales disponibles
 	pointDeRencontreLocal.sin_port = htons(PORT); // = 5000 ou plus
-	
-	// On demande l’attachement local de la socket
-	if((bind(socketEcoute, (struct sockaddr *)&pointDeRencontreLocal, longueurAdresse)) < 0) {
-		perror("bind");
-		exit(-2); 
-	}
-	printf("Socket 0 attachée avec succès !\n");
+	attachementLocalSocket(socketEcoute,pointDeRencontreLocal,longueurAdresse);
+	fixFileSocket(socketEcoute,5);
 
-
-	// On fixe la taille de la file d’attente à 5 (pour les demandes de connexion non encore traitées)
-	if(listen(socketEcoute, 5) < 0){
-   		perror("listen");
-   		exit(-3);
-	}
-	printf("Socket placée en écoute passive ...\n");
-
-    char grille[LIGNES][COLONNES];
-    int choixCol = 10;
-    int choixLigne = 10;
-    initGrille(grille);
-
+	// Paramètre du jeu
+    char grille[LIGNES][COLONNES]; /* La grille de jeu */
+    int choixCol = 10; /* Initialisé à 10 pour permettre de rentrer dans la futur boucle while*/
+    int choixLigne = 10; /* Initialisé à 10 pour permettre de rentrer dans la futur boucle while*/
 	int joueur_actuel = 0;
+	char MSGCol[11]; /* Le choix de la colonne */
+	char MSGLigne[11]; /* Le choix de la ligne */
+	char attente[LG_MESSAGE] = "attente\0"; /* Message d'attente */
+	char attente_non[LG_MESSAGE] = "nonattente\0"; /* Message de non attente */
+	char result[LG_MESSAGE]; /* message de résultat */
+	char Message[11]; /* Le message d'envoi */
+	strcpy(Message,"continue"); /* Copie par défaut du message continue */
+    initGrille(grille);
+	
 	// boucle d’attente de connexion : en théorie, un serveur attend indéfiniment !
 	while(1){
-		memset(messageRecu, 0x00, LG_MESSAGE*sizeof(char));
+		memset(messageRecu, 0x00, LG_MESSAGE*sizeof(char)); // memset sert à faire une copie d'un octet n fois à partir d'une adresse mémoire donnée
 		printf("Attente d’une demande de connexion (quitter avec Ctrl-C)\n\n");
-
 
 		// c’est un appel bloquant
 		connectSocket[joueur_actuel] = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
@@ -105,11 +115,12 @@ int main(int argc, char *argv[]){
 		// On commence dès qu'on a deux joueurs
 		if (joueur_actuel == 2){
 			int tour = 0;
-			char joueurJouer = 'O';
-			char joueurEnFace = 'X';
-			char temp = 'Z';
-			joueur_actuel = 0;
-			autre = 1;
+			char joueurJouer = 'O'; /* L'un des joueurs prendre le role '0'*/
+			char joueurEnFace = 'X'; /* L'autre joueur prendre le role 'X' */
+			char temp = 'Z'; /* Variable temporaire utilisé pour inversé les deux roles */
+			joueur_actuel = 0; /* Connaître le joueur actuel */
+			autre = 1; /* L'autre joueur */
+			// Début de la boucle de jeu ! Tant que le jeu n'est pas fini on continue
 			while(1) {
 				switch(ecrits = write(connectSocket[joueur_actuel], &messageEnvoi, sizeof(messageEnvoi))){
 					case -1 : /* une erreur ! */
@@ -227,7 +238,7 @@ int main(int argc, char *argv[]){
 											// On ferme la socket de dialogue et on se replace en attente ...
 											
 									}
-									sleep(1);
+									sleep(1); /* Permet d'éviter le moindre bug */
 
 									/* Envoi à l'autre joueur le changement pour qu'il mette à jour sa grille chez lui directement */
 									switch(ecrits = write(connectSocket[autre], &MSGLigne, sizeof(MSGLigne))){
@@ -246,7 +257,7 @@ int main(int argc, char *argv[]){
 			
 									}
 								
-									/* COndition pour savoir si le jeu ne continue pas pour fermer le serveur */
+									/* Condition pour savoir si le jeu ne continue pas pour fermer le serveur */
 									if (strcmp(Message,"continue")!=0){
 										printf("Le seveur vient d'être fermé\n");
 										close(connectSocket[0]);
