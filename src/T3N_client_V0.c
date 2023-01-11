@@ -51,30 +51,40 @@ int main(int argc, char *argv[]){
 	}
 	printf("Connexion au serveur %s:%d réussie!\n",ip_dest,port_dest);
 
-
+    /* Initialisation de la grille */
     char grille[LIGNES][COLONNES];
     int choixCol = 10,choixLigne = 10;
     initGrille(grille);
     char Recoi_start[MAX_LEN];
 
+    /* Réception du message de lancement */
     switch(nb = read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
-        case -1 :
+        case -1 : /* Erreur ! */
             perror("Erreur de lecture...");
             close(descripteurSocket);
             exit(-4);
-        case 0 : 
+        case 0 : /* Socket fermé */
         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
             return 0;
-        default:
-            // Recoi_start[nb]='\0';
+        default: /* n octet */
+            
             printf("Client : Lancement Message %s reçu! (%d octets)\n\n", Recoi_start, nb);
+
+            /* Vérification si le message lance ou non */
             if (strcmp(Recoi_start,"start")==0){
                 printf("Client : Connexion réussi, début de partie...");
+
+                /* Boucle de jeu */
                 while(1){
+                    /* Affichage de la grille */
                     afficheGrille(grille);
+
+                    /* initialisation des valeurs par défaut */
                     choixCol = 10;
                     choixLigne = 10;
                     choix = -1;
+
+                    /* Saisie des coordonnées */
                     while (choix==-1)
                     {
                         printf("Choisissez une colonne: ");
@@ -83,40 +93,45 @@ int main(int argc, char *argv[]){
                         printf("Choisissez une ligne: ");
                         scanf(" %d", &choixLigne);
 
+                        /* Vérification si l'emplacement est dans la grille */
                         choix = isInGrille(grille,choixLigne,choixCol);
                         if (choix != -1) {
+                            /* Vérification si la grille est vide */
                             choix = isEmpty(grille,choixLigne,choixCol);
                         }
                     }   
+                    /* MIse à joru de la grille */
                     updateGrille(grille,choixLigne,choixCol,'O');
                     char Envoi[2] = {choixLigne,choixCol};
-                    // Partie envoie
+
+                    /* Envoi des coordnnées au serveur */
                     switch(nb = write(descripteurSocket, &Envoi, sizeof(Envoi))){
-                        case -1 :
+                        case -1 : // Fermeture !
                                 perror("Erreur en écriture...");
                                 close(descripteurSocket);
                                 exit(-3);
-                        case 0 : 
+                        case 0 : // erreur socket !
                             fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
                             return 0;
-                        default: 
+                        default: // Il a bien envoyé
                             printf("Client : envoyé! (%d octets)\n\n", nb);
                             printf("\nColonne envoyé : %d\n",Envoi[0]);
                             printf("Ligne envoyé : %d\n\n",Envoi[1]);
                     }
-                    // Partie réception
+                    /* réception des coordnnées du serveur */
                     char Recoi[2]; 
                     switch(nb = read(descripteurSocket, Recoi, sizeof(Recoi))) {
-                        case -1 :
+                        case -1 : // Erreur !
                             perror("Erreur de lecture...");
                             close(descripteurSocket);
                             exit(-4);
-                        case 0 : 
+                        case 0 :  // Plus de socket
                         fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
                             return 0;
-                        default:
+                        default: // Il peut placer 
                             Recoi[nb]='\0';
                             printf("Client : Message reçu du serveur : %s (%d octets)\n\n", Recoi, nb);
+                            // Mise à jour de la grille
                             updateGrille(grille,Recoi[0],Recoi[1],'X');
                     }
                 }
