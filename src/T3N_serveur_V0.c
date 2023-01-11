@@ -81,6 +81,7 @@ int main(int argc, char *argv[]){
    			close(socketEcoute);
    			exit(-4);
 		}
+		/* Envoi que le joueur peut commencer */
         switch(ecrits = write(socketDialogue, &messageEnvoi, sizeof(messageEnvoi))){
             case -1 : /* une erreur ! */
                 perror("write");
@@ -96,6 +97,7 @@ int main(int argc, char *argv[]){
 				while (1){
                     // On réception les données du client (cf. protocole)
 
+					/* Réception des coordnnées */
                     switch(lus = read(socketDialogue, messageRecu, LG_MESSAGE*sizeof(char))) {
                         case -1 : /* une erreur ! */ 
                             perror("read"); 
@@ -113,13 +115,17 @@ int main(int argc, char *argv[]){
 
                             choixLigne = 10;
                             choixCol = 10;
+							/* Boucle de génération automatique d'une valeur entre 0 et 3 */
                             while ((isInGrille(grille,choixLigne,choixCol)==-1) && (isEmpty(grille,choixLigne,choixCol)==-1))
                             {
                                 choixLigne = rand() % 3;
                                 choixCol = rand() % 3;
                             }   
+
+							/* Mise à jour de la grille */
                             updateGrille(grille,choixLigne,choixCol,'X');
 
+							/* Affichage de la grille */
 							afficheGrille(grille);
                             char Envoi[2];
 							Envoi[0] = choixLigne;
@@ -141,15 +147,6 @@ int main(int argc, char *argv[]){
                         }
                 }
         }
-
-
-
-
-
-
-
-        
-	
 
 	}
 	// On ferme la ressource avant de quitter
