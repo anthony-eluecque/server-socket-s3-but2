@@ -56,6 +56,10 @@ int main(int argc, char *argv[]){
 	printf("Connexion au serveur %s:%d réussie!\n",ip_dest,port_dest);
 
 
+
+
+
+
     char grille[LIGNES][COLONNES];
     int choixCol = 10,choixLigne = 10;
     initGrille(grille);

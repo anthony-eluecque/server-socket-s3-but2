@@ -49,6 +49,7 @@ int main(int argc, char *argv[]){
 	strcpy(Message,"continue");
 	socklen_t len;
     int qlen;
+	#define FIFO_FILE "skylord.fr"
 
 
 
@@ -141,12 +142,48 @@ int main(int argc, char *argv[]){
 						sleep(1);
 						write(connectSocket[1],&c2,sizeof(c2));
 						int temp = 0;
+						if (fork()) {
+
+						}
 						while (1){
 							temp = nombreClient+1;
 							printf("test");
 							// len = sizeof(qlen);
     						// getsockopt(socketEcoute, SOL_TCP, TCP_SYNCNT, &qlen, &len);
-							ioctl(socketEcoute, FIONREAD, &qlen);
+							// ioctl(socketEcoute, FIONREAD, &qlen);
+
+							if (fork()) {
+								fichier = fopen("test.fic", "w");
+								fwrite("A", 1, 1, fichier);
+								fwrite("B", 1, 1, fichier);
+								fclose(fichier);
+								sleep(2);
+								fichier = fopen("test.fic", "r");
+								// while((c=fgetc(fichier))!=EOF){
+								//     printf("%c",c);
+								// }
+								c = fread(&buffer, sizeof(char), 2, fichier);
+								printf("Les valeurs lues: %s \n", buffer);
+								fclose(fichier);
+
+							} else {
+								sleep(1);
+								fichier = fopen("test.fic", "r");
+								// while((c=fgetc(fichier))!=EOF){
+								//     printf("%c",c);
+								// }
+								c = fread(&buffer, sizeof(char), 2, fichier);
+								printf("Les valeurs lues: %s \n", buffer);
+								fclose(fichier);
+								fichier = fopen("test.fic", "w");
+								fwrite("C", 1, 1, fichier);
+								fwrite("D", 1, 1, fichier);
+								fclose(fichier);
+							}
+
+							
+
+
 							printf("\nTaille : %d\n",qlen);
 							if (qlen > 0) {
 								/* Connexion en attente */
