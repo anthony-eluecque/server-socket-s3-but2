@@ -13,6 +13,11 @@
 #define COLONNES 3
 #define LIGNES 3
 
+// --------------------------------//
+// 			ELUECQUE ANTHONY       //
+// 			CORION GAUTHIER		   //
+// --------------------------------//
+//   BUT 2 : SAE Système et réseau //
 
 int main(int argc, char *argv[]){
 	int descripteurSocket;
