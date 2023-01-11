@@ -14,10 +14,13 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 4552 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 4560 // = 4500 (ports >= 4500 réservés pour usage explicite)
 #define SOL_TCP 6
 #define LG_MESSAGE 256
-
+int ctoi( int c )
+{
+    return c - '0';
+}
 int main(int argc, char *argv[]){
 	int socketEcoute;
 
@@ -127,36 +130,10 @@ int main(int argc, char *argv[]){
 				char joueurJouer = 'O';
 				char joueurEnFace = 'X';
 				char temp = 'Z';
-				joueur_actuel = 0;
 				int nombreClient = joueur_actuel;
+				joueur_actuel = 0;
 				autre = 1;
 				if (fork()>0) {
-					while (1) {
-						printf("\nEn attente d'un spectateur...\n");
-						ret_val = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
-						if (ret_val < 0) {
-							perror("accept");
-							close(ret_val);
-							exit(-4);
-						}
-						ecrits = write(ret_val, &nouvelENvoi, sizeof(nouvelENvoi));
-						char fusionID[256] = "";
-						fichier = fopen("super.fr", "r");
-						c = fread(&fusionID, sizeof(char), 256, fichier);
-						printf("Fus 1 : %s",fusionID);
-						fclose(fichier);
-						sleep(1);
-						fichier = fopen("super.fr", "w");
-						sprintf(Retvall,"%d",ret_val);
-						strcat(fusionID,Retvall);
-						// strcpy(fusionID,Retvall);
-						printf("Fus 2 : %s",fusionID);
-						// fwrite("", sizeof(char), 1, fichier);
-						// sleep(1);
-						fwrite(fusionID, sizeof(char), sizeof(fusionID), fichier);
-						fclose(fichier);
-					}
-				} else {
 					while(1) {
 						switch(ecrits = write(connectSocket[joueur_actuel], &messageEnvoi, sizeof(messageEnvoi))){
 							case -1 : /* une erreur ! */
@@ -203,25 +180,37 @@ int main(int argc, char *argv[]){
 										int i;
 										char delim[] = "";
 										char *ptr = strtok(buffer, delim);
-										for (i = 2 ; i<sizeof(buffer)+2; i++){
-											nombreClient = nombreClient+1;
-											printf("%d\n",atoi(&ptr[i-2]));
-											connectSocket[i] = atoi(&ptr[i-2]);
-											printf("Nouveau client en spectateur %d \n", ptr[i-2]);
-											char EnvoiiReussi[LG_MESSAGE] = "Vous êtes dans la file d'attente\0";
-											ecrits = write(connectSocket[i], &EnvoiiReussi, sizeof(EnvoiiReussi));
+										for (i = 0 ; i<sizeof(buffer)+3; i++){
+											if (i > 1){
+												nombreClient = nombreClient+1;
+												// printf("%d\n",atoi(ptr[i-2]));
+												connectSocket[nombreClient] = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
+												connectSocket[i] = ctoi(ptr[i-2]);
+												printf("Nouveau client en spectateur %d N°%d \n", connectSocket[i],nombreClient);
+												char EnvoiiReussi[LG_MESSAGE] = "Vous êtes dans la file d'attente\0";
+												sleep(1);
+												ecrits = write(atoi(connectSocket[i]), &nouvelENvoi, sizeof(nouvelENvoi));
+												close(connectSocket[i]);
+											}
+											printf("Client en jeu : %d\n",connectSocket[i]);
 										}
 									} else {
 										printf("Aucune connexion en attente\n");
+										int i;
+										for (i = 0 ; i<sizeof(buffer)+3; i++){
+				
+											printf("Client en jeu : %d\n",connectSocket[i]);
+										}
 									}
-									if (nombreClient > 2) {
-										printf("%d", connectSocket[0]);
-									}
+									// if (nombreClient > 2) {
+									// 	printf("%d", connectSocket[0]);
+									// }
 									int i;
 									for (i = 2 ; i<nombreClient ; i++){
 										ecrits = write(connectSocket[joueur_actuel], &MSGLigne, sizeof(MSGLigne));
 										if (ecrits > 0){
 											printf("\nEnvoi de la grille à %d\n", connectSocket[i]);
+											ecrits = write(connectSocket[i], &attente, sizeof(attente));
 										} else {
 											printf("%d",ecrits);
 										}
@@ -336,6 +325,33 @@ int main(int argc, char *argv[]){
 								}
 							}
 						}
+				} else {
+					while (1) {
+						printf("\nEn attente d'un spectateur...\n");
+						ret_val = accept(socketEcoute, (struct sockaddr *)&pointDeRencontreDistant, &longueurAdresse);
+						if (ret_val < 0) {
+							perror("accept");
+							close(ret_val);
+							exit(-4);
+						}
+						ecrits = write(ret_val, &nouvelENvoi, sizeof(nouvelENvoi));
+						char fusionID[256] = "";
+						fichier = fopen("super.fr", "r");
+						c = fread(&fusionID, sizeof(char), 256, fichier);
+						printf("Fus 1 : %s",fusionID);
+						fclose(fichier);
+						sleep(1);
+						fichier = fopen("super.fr", "w");
+						sprintf(Retvall,"%d",ret_val);
+						strcat(fusionID,Retvall);
+						// strcpy(fusionID,Retvall);
+						printf("Fus 2 : %s",fusionID);
+						// fwrite("", sizeof(char), 1, fichier);
+						// sleep(1);
+						fwrite(fusionID, sizeof(char), sizeof(fusionID), fichier);
+						fclose(fichier);
+					}
+					
 				}
 		}
 	}

@@ -64,6 +64,7 @@ int main(int argc, char *argv[]){
     int choixCol = 10,choixLigne = 10;
     initGrille(grille);
     char Recoi_start[MAX_LEN];
+    char Recoi_start2[MAX_LEN];
     int choix_2;
 
     switch(nb = read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
@@ -72,7 +73,7 @@ int main(int argc, char *argv[]){
             close(descripteurSocket);
             exit(-4);
         case 0 : 
-        fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+    
             return 0;
         default:
             // Recoi_start[nb]='\0';
@@ -81,16 +82,19 @@ int main(int argc, char *argv[]){
                 while(1) {
                     printf("\nBienvenue en tant que spectateur de la partie !\n");
                     printf("\nVous êtes en attente d'une fin de manche...\n");
-                    switch(nb = read(descripteurSocket, Recoi_start, sizeof(Recoi_start))) {
+                    printf("\ntest\n");
+                    sleep(1);
+                    switch(nb = read(descripteurSocket, Recoi_start2, sizeof(Recoi_start2))) {
                         case -1 :
                             perror("Erreur de lecture...");
                             close(descripteurSocket);
                             exit(-4);
                         case 0 : 
-                        fprintf(stderr, "La socket a été fermée par le serveur !\n\n");
+
                             return 0;
                         default:
-                            printf("%s", Recoi_start);
+                            printf("\ntest");
+                            printf("%s", Recoi_start2);
                     }
                 }
             }
