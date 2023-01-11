@@ -14,7 +14,7 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 4560 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 4562 // = 4500 (ports >= 4500 réservés pour usage explicite)
 #define SOL_TCP 6
 #define LG_MESSAGE 256
 int ctoi( int c )
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]){
 				int nombreClient = joueur_actuel;
 				joueur_actuel = 0;
 				autre = 1;
-				if (fork()>0) {
+				if (fork() != 0) {
 					while(1) {
 						switch(ecrits = write(connectSocket[joueur_actuel], &messageEnvoi, sizeof(messageEnvoi))){
 							case -1 : /* une erreur ! */
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]){
 												printf("Nouveau client en spectateur %d N°%d \n", connectSocket[i],nombreClient);
 												char EnvoiiReussi[LG_MESSAGE] = "Vous êtes dans la file d'attente\0";
 												sleep(1);
-												ecrits = write(atoi(connectSocket[i]), &nouvelENvoi, sizeof(nouvelENvoi));
+												ecrits = write(connectSocket[i], &nouvelENvoi, sizeof(nouvelENvoi));
 												close(connectSocket[i]);
 											}
 											printf("Client en jeu : %d\n",connectSocket[i]);
@@ -205,16 +205,16 @@ int main(int argc, char *argv[]){
 									// if (nombreClient > 2) {
 									// 	printf("%d", connectSocket[0]);
 									// }
-									int i;
-									for (i = 2 ; i<nombreClient ; i++){
-										ecrits = write(connectSocket[joueur_actuel], &MSGLigne, sizeof(MSGLigne));
-										if (ecrits > 0){
-											printf("\nEnvoi de la grille à %d\n", connectSocket[i]);
-											ecrits = write(connectSocket[i], &attente, sizeof(attente));
-										} else {
-											printf("%d",ecrits);
-										}
-									}
+									// int i;
+									// for (i = 2 ; i<nombreClient ; i++){
+									// 	// ecrits = write(connectSocket[joueur_actuel], &MSGLigne, sizeof(MSGLigne));
+									// 	if (ecrits > 0){
+									// 		printf("\nEnvoi de la grille à %d\n", connectSocket[i]);
+									// 		ecrits = write(connectSocket[i], &attente, sizeof(attente));
+									// 	} else {
+									// 		printf("%d",ecrits);
+									// 	}
+									// }
 									
 									temp = joueurEnFace;
 									joueurEnFace = joueurJouer;
