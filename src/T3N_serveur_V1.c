@@ -28,9 +28,13 @@ int main(int argc, char *argv[]){
 	char messageEnvoi[] = "start\0";
 	char messageRecu[LG_MESSAGE]; /* le message de la couche Application ! */
 	int ecrits, lus; /* nb d’octets ecrits et lus */
+
+	/* Les octet reçu et envoyé */
 	int nb;
 	int retour;
     int choix;
+
+	/* La colonne et la ligne */
 	char MSGCol[11];
 	char MSGLigne[11];
 
@@ -73,6 +77,8 @@ int main(int argc, char *argv[]){
 	printf("Socket placée en écoute passive ...\n");
 
 	// boucle d’attente de connexion : en théorie, un serveur attend indéfiniment !
+
+	/* Initialisaiton de la grille */
     char grille[LIGNES][COLONNES];
     int choixCol = 10;
     int choixLigne = 10;
@@ -90,6 +96,8 @@ int main(int argc, char *argv[]){
    			close(socketEcoute);
    			exit(-4);
 		}
+
+		/* Écriture de commencement */
         switch(ecrits = write(socketDialogue, &messageEnvoi, sizeof(messageEnvoi))){
             case -1 : /* une erreur ! */
                 perror("write");
@@ -104,7 +112,6 @@ int main(int argc, char *argv[]){
                 
 				while (1){
                     // On réception les données du client (cf. protocole)
-
                     switch(lus = read(socketDialogue, messageRecu, LG_MESSAGE*sizeof(char))) {
                         case -1 : /* une erreur ! */ 
                             perror("read"); 
@@ -117,16 +124,20 @@ int main(int argc, char *argv[]){
                         default:  /* réception de n octets */
 							printf("Retour après jeu du joueur\n");
                             printf("Serveur : Message reçu : %d (%d octets)\n\n", messageRecu[0], lus);
-                            // On envoie des données vers le client (cf. protocole)
 
+							/* Mise à joru de la grille */
                             updateGrille(grille,messageRecu[0],messageRecu[1],'X');
+
+							/* Condition si la grille est pleine ou non */
 							if (grillePleine(grille)==-1) {
-								// Message[] = "Xend\0";
+								/* Message mis sur Xend */
 								strcpy(Message,"Xend");
 							} else  {
+								/* Vérification si X a gagné */
 								if (checkWin(grille,'X')==1) {
 									strcpy(Message,"Xwins");
 								} else {
+									/* Mise à joru de la grille */
 									choixLigne = 10;
                             		choixCol = 10;
 									choix = -1;
@@ -138,10 +149,14 @@ int main(int argc, char *argv[]){
 											choix = isEmpty(grille,choixLigne,choixCol);
 										}
 									}   
+
+									/* Mise à jour de la grille */
 									updateGrille(grille,choixLigne,choixCol,'O');
 
+									/* Affichage de la grille */
 									afficheGrille(grille);
-											
+
+									/* Vérification si O gagne */	
 									if (checkWin(grille,'O')==1) {
 										strcpy(Message,"Owins");
 									} else {
@@ -151,6 +166,8 @@ int main(int argc, char *argv[]){
 									}
 								}
 							}
+
+							/* Concaténation des coordonnées et du message de renvoi (Xwins,00continue,Owins, Xend...) */
 							MSGCol[0] = ' ';
 							MSGLigne[0] = ' ';
 							sprintf(MSGCol,"%d",choixCol);
@@ -159,6 +176,7 @@ int main(int argc, char *argv[]){
 							strcat(MSGLigne,Message);
 			
 
+							/* Envoi du message s'il peut continuer, s'il a gagné ou s'il arrête. */
                             switch(ecrits = write(socketDialogue, MSGLigne, sizeof(MSGLigne))){
                                 case -1 : /* une erreur ! */
                                     perror("write");
@@ -172,6 +190,8 @@ int main(int argc, char *argv[]){
                                     printf("Serveur : Message envoyé (%d octets) \nStatus %s \nCol : %c \nLigne : %c\n\n",ecrits,MSGLigne,MSGLigne[0],MSGLigne[1]);
                                     // On ferme la socket de dialogue et on se replace en attente ...
 							}
+
+							/* condition s'il continue ou non la parite */
 							if (strcmp(Message,"continue")!=0){
 								printf("JE ME FERME\n");
 								close(socketDialogue);
