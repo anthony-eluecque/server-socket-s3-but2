@@ -14,8 +14,6 @@
 #define LIGNES 3
 
 
-
-
 int main(int argc, char *argv[]){
 	int descripteurSocket;
 	struct sockaddr_in sockaddrDistant;
@@ -23,15 +21,23 @@ int main(int argc, char *argv[]){
 
 	char buffer[]="Hello server!"; // buffer stockant le message
 	int nb; /* nb d’octets écrits et lus */
-    char Recoi[256];
+    char Recoi[256]; /* Message de réception */
 	char ip_dest[16];
-	int port_dest;
-
-    /* Initialisation des message de reàu et d'envoi */
-    int choix;
-    char status[9];
+    char status[9]; /* Le status de la partie */
     char placement[MAX_LEN];
-    int row,col;
+    int choix,row,col,port_dest;
+    /* 
+        choix = permet de rentrer dans une boucle while de saisie 
+        row =  la ligne (de 0 à 2) de placement
+        col = la colonne (de 0 à 2) de placement
+    */
+
+    // Préparation du jeu
+    char grille[LIGNES][COLONNES]; /* La grille de jeu */
+    int choixCol = 10,choixLigne = 10; /* Initialisation de la colonne et la ligne */
+    initGrille(grille); /* Initialisation de la grille */
+
+    // Partie gestion de la connexion du client avec ./client IP PORT
 
 	if (argc>1) { // si il y a au moins 2 arguments passés en ligne de commande, récupération ip et port
 		strncpy(ip_dest,argv[1],16);
@@ -59,15 +65,6 @@ int main(int argc, char *argv[]){
 	}
 
 	printf("Connexion au serveur %s:%d réussie!\n",ip_dest,port_dest);
-
-    /* Initialisation de la grille */
-    char grille[LIGNES][COLONNES];
-
-    /* Initialisation de la colonne et la ligne */
-    int choixCol = 10,choixLigne = 10;
-
-    /* Initialisation de la grille */
-    initGrille(grille);
 
     /* Initialisation des messages de reçu */
     char Recoi_start[MAX_LEN];
