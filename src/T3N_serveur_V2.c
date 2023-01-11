@@ -13,7 +13,7 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 45282 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 45283 // = 4500 (ports >= 4500 réservés pour usage explicite)
 
 #define LG_MESSAGE 256
 

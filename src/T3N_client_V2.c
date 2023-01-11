@@ -143,6 +143,7 @@ int main(int argc, char *argv[]){
                                                     updateGrille(grille,row,col,Color_Adver[0]);
                                                 }
                                                 else{
+                                                    updateGrille(grille,row,col,Color_Adver[0]);
                                                     printf("%s","Nous vous souhaitons une bonne journée.\n");
                                                     afficheGrille(grille);
                                                     printf("\n\n\nVous avez perdu.\n\n\n");
