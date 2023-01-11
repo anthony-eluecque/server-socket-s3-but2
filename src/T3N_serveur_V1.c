@@ -13,7 +13,7 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 45279 // = 4500 (ports >= 4500 réservés pour usage explicite)
+#define PORT 45282 // = 4500 (ports >= 4500 réservés pour usage explicite)
 
 #define LG_MESSAGE 256
 
@@ -146,15 +146,15 @@ int main(int argc, char *argv[]){
 							} else {
 								autre = 0;
 							}
-							printf("---------->   %d,%d \n",joueur_actuel,autre);
+							// printf("---------->   %d,%d \n",joueur_actuel,autre);
 							write(connectSocket[joueur_actuel], &attente_non, sizeof(attente_non));
 							sleep(1);
-							printf("----> %s %s \n", attente_non, attente);
+							// printf("----> %s %s \n", attente_non, attente);
 							write(connectSocket[autre], &attente, sizeof(attente));
-							printf("--------> ENVOI A : %d", connectSocket[joueur_actuel]);
-							printf("--------> ENVOI A : %d", connectSocket[autre]);
+							// printf("--------> ENVOI A : %d", connectSocket[joueur_actuel]);
+							// printf("--------> ENVOI A : %d", connectSocket[autre]);
 							// printf("Joueur en non-attente : %d\n",joueur_actuel);
-							// printf("Joueur en attente : %d\n",aut²re);
+							printf("\nEn attente d'une coordonnée...\n");
 							// On réception les données du client (cf. protocole)
 							switch(lus = read(connectSocket[joueur_actuel], messageRecu, LG_MESSAGE*sizeof(char))) {
 								case -1 : /* une erreur ! */ 
@@ -168,8 +168,8 @@ int main(int argc, char *argv[]){
 									close(connectSocket[1]);
 									return 0;
 								default:  /* réception de n octets */
-									printf("Retour après jeu du joueur\n");
-									printf("Serveur : Message reçu : %d (%d octets)\n\n", messageRecu[0], lus);
+									// printf("Retour après jeu du joueur\n");
+									printf("\nServeur : Message reçu : %d (%d octets)\n\n", messageRecu[0], lus);
 									// On envoie des données vers le client (cf. protocole)
 
 									updateGrille(grille,messageRecu[0],messageRecu[1],joueurJouer);
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]){
 									}
 								
 									if (strcmp(Message,"continue")!=0){
-										printf("JE ME FERME\n");
+										printf("Le seveur vient d'être fermé\n");
 										close(connectSocket[0]);
 										close(connectSocket[1]);
 										exit(0);
