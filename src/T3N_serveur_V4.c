@@ -15,7 +15,7 @@
 #define NB_JOUEURS 2
 #define COLONNES 3
 #define LIGNES 3
-#define PORT 5004 // = 5000 (ports >= 5000 réservés pour usage explicite)
+#define PORT 5999 // = 5000 (ports >= 5000 réservés pour usage explicite)
 #define LG_MESSAGE 256
 
 // --------------------------------//
@@ -90,86 +90,88 @@ int main(int argc, char *argv[]){
 			joueur_actuel = 0; /* Connaître le joueur actuel */
 			autre = 1; /* L'autre joueur */
 			// Début de la boucle de jeu ! Tant que le jeu n'est pas fini on continue
-			while(1) {
-				write_int(connectSocket[joueur_actuel],messageEnvoi,(int)sizeof(messageEnvoi));
-				/* Initialisation et envoi des X et O en fonction de leur position dans le socket */
-				char c1 = 'X'; char c2 = 'O';
-				/* Envoi au joueur qui ne joue pas qu'il peut joeur */
-				write_int(connectSocket[autre], messageEnvoi, sizeof(messageEnvoi));
-				/* Envoi au joueur numéro 1 le symbole */
-				write_char(connectSocket[0],&c1,sizeof(c1));
-				/* Envoi au joueur numéro 2 le symbole */
-				write_char(connectSocket[1],&c2,sizeof(c2));
+			if (fork()){
+				while(1) {
+					write_int(connectSocket[joueur_actuel],messageEnvoi,(int)sizeof(messageEnvoi));
+					/* Initialisation et envoi des X et O en fonction de leur position dans le socket */
+					char c1 = 'X'; char c2 = 'O';
+					/* Envoi au joueur qui ne joue pas qu'il peut joeur */
+					write_int(connectSocket[autre], messageEnvoi, sizeof(messageEnvoi));
+					/* Envoi au joueur numéro 1 le symbole */
+					write_char(connectSocket[0],&c1,sizeof(c1));
+					/* Envoi au joueur numéro 2 le symbole */
+					write_char(connectSocket[1],&c2,sizeof(c2));
 
-				/* Boucle de jeu */
-				while (1){
-					/* Échange des joueurs de leurs symboles (X et O) et leur index (0 ou 1) */
-					temp = joueurEnFace;
-					joueurEnFace = joueurJouer;
-					joueurJouer = temp;
-					if (joueur_actuel == 0){
-						autre = 1;
-					} else {
-						autre = 0;
-					}
+					/* Boucle de jeu */
+					while (1){
+						/* Échange des joueurs de leurs symboles (X et O) et leur index (0 ou 1) */
+						temp = joueurEnFace;
+						joueurEnFace = joueurJouer;
+						joueurJouer = temp;
+						if (joueur_actuel == 0){
+							autre = 1;
+						} else {
+							autre = 0;
+						}
 
-					/* Transfert du message au client pour qu'il n'attend pas*/	
-					write_char(connectSocket[joueur_actuel],attente_non,sizeof(attente_non));	
-					/* Attente d'une seconde pour que la transmission se passe bien */
-					sleep(1);
-					/* Transfert du message au client pour qu'il attend */
-					write_char(connectSocket[autre],attente,sizeof(attente));
-					printf("\nEn attente d'une coordonnée...\n");
-					/* Réception des coordonnées du client */
-					read_char(connectSocket[joueur_actuel],messageRecu,LG_MESSAGE*sizeof(char));
-					/* Mise à jour de la grille */
-					updateGrille(grille,messageRecu[0],messageRecu[1],joueurJouer);
+						/* Transfert du message au client pour qu'il n'attend pas*/	
+						write_char(connectSocket[joueur_actuel],attente_non,sizeof(attente_non));	
+						/* Attente d'une seconde pour que la transmission se passe bien */
+						sleep(1);
+						/* Transfert du message au client pour qu'il attend */
+						write_char(connectSocket[autre],attente,sizeof(attente));
+						printf("\nEn attente d'une coordonnée...\n");
+						/* Réception des coordonnées du client */
+						read_char(connectSocket[joueur_actuel],messageRecu,LG_MESSAGE*sizeof(char));
+						/* Mise à jour de la grille */
+						updateGrille(grille,messageRecu[0],messageRecu[1],joueurJouer);
 
-					/* Affichage de la grille */
-					afficheGrille(grille);
+						/* Affichage de la grille */
+						afficheGrille(grille);
 
-					/* Vérification si la grille est pleine */
-					char fusionJoueur[256] = "";
-					if (grillePleine(grille)==-1) {
-						strcat(fusionJoueur,&joueurJouer);
-						strcat(fusionJoueur,"end");
-						strcpy(Message,fusionJoueur);
-					} 
-					/* Vérification si le joueur est gagnant ou non */
-					else if (checkWin(grille,joueurJouer)==1) {
-						strcat(fusionJoueur,&joueurJouer);
-						strcat(fusionJoueur,"wins");
-						strcpy(Message,fusionJoueur);
+						/* Vérification si la grille est pleine */
+						char fusionJoueur[256] = "";
+						if (grillePleine(grille)==-1) {
+							strcat(fusionJoueur,&joueurJouer);
+							strcat(fusionJoueur,"end");
+							strcpy(Message,fusionJoueur);
+						} 
+						/* Vérification si le joueur est gagnant ou non */
+						else if (checkWin(grille,joueurJouer)==1) {
+							strcat(fusionJoueur,&joueurJouer);
+							strcat(fusionJoueur,"wins");
+							strcpy(Message,fusionJoueur);
+						}
+						/* Concaténation des coordonnées et du message de renvoi (Xwins,00continue,Owins, Xend...) */
+						MSGCol[0] = ' ';
+						MSGLigne[0] = ' ';
+						sprintf(MSGCol,"%d",messageRecu[1]);
+						sprintf(MSGLigne,"%d",messageRecu[0]);
+						strcat(MSGLigne,MSGCol);
+						strcat(MSGLigne,Message);
+		
+						printf("Changement : %c %c \n", joueurJouer, joueurEnFace);
+						/* Envoi au joueur qui passe dans la boucle actuellement le changement */
+						
+						write_char(connectSocket[joueur_actuel],MSGLigne,sizeof(MSGLigne));
+						/* Envoi à l'autre joueur le changement pour qu'il mette à jour sa grille chez lui directement */
+						write_char(connectSocket[autre],MSGLigne,sizeof(MSGLigne));
+								
+						/* Condition pour savoir si le jeu ne continue pas pour fermer le serveur */
+						if (strcmp(Message,"continue")!=0){
+							printf("Le seveur vient d'être fermé\n");
+							close(connectSocket[0]);
+							close(connectSocket[1]);
+							exit(0);
+						}
+						/* Échange des index des joueurs */
+						if (joueur_actuel == 1){
+							joueur_actuel = 0;
+						} else {
+							joueur_actuel = 1;
+						}
+						printf("\n\nAttente d'une nouvelle manche....\n\n");
 					}
-					/* Concaténation des coordonnées et du message de renvoi (Xwins,00continue,Owins, Xend...) */
-					MSGCol[0] = ' ';
-					MSGLigne[0] = ' ';
-					sprintf(MSGCol,"%d",messageRecu[1]);
-					sprintf(MSGLigne,"%d",messageRecu[0]);
-					strcat(MSGLigne,MSGCol);
-					strcat(MSGLigne,Message);
-	
-					printf("Changement : %c %c \n", joueurJouer, joueurEnFace);
-					/* Envoi au joueur qui passe dans la boucle actuellement le changement */
-					
-					write_char(connectSocket[joueur_actuel],MSGLigne,sizeof(MSGLigne));
-					/* Envoi à l'autre joueur le changement pour qu'il mette à jour sa grille chez lui directement */
-					write_char(connectSocket[autre],MSGLigne,sizeof(MSGLigne));
-							
-					/* Condition pour savoir si le jeu ne continue pas pour fermer le serveur */
-					if (strcmp(Message,"continue")!=0){
-						printf("Le seveur vient d'être fermé\n");
-						close(connectSocket[0]);
-						close(connectSocket[1]);
-						exit(0);
-					}
-					/* Échange des index des joueurs */
-					if (joueur_actuel == 1){
-						joueur_actuel = 0;
-					} else {
-						joueur_actuel = 1;
-					}
-					printf("\n\nAttente d'une nouvelle manche....\n\n");
 				}
 			}
 		}
