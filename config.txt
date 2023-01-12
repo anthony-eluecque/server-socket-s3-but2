@@ -1,0 +1,7 @@
+cd src
+gcc T3N_serveur.c -o serveur 
+gcc T3N_client.c -o client 
+
+./serveur 
+./client 127.0.0.1 PORT 
+./client 127.0.0.1 PORT
