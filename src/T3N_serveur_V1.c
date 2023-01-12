@@ -17,6 +17,12 @@
 
 #define LG_MESSAGE 256
 
+// --------------------------------//
+// 			ELUECQUE ANTHONY       //
+// 			CORION GAUTHIER		   //
+// --------------------------------//
+//   BUT 2 : SAE Système et réseau //
+
 int main(int argc, char *argv[]){
 	int socketEcoute;
 
