@@ -6,32 +6,41 @@
 #include <string.h> /* pour memset */
 #include <netinet/in.h> /* pour struct sockaddr_in */
 #include <arpa/inet.h> /* pour htons et inet_aton */
-#include "Utils.c"
-#include "Utils_serveur.c"
+#include "./utils/Utils.c"
+#include "./utils/Utils_serveur.c"
 
 #define MAX_LEN 256
 #define COLONNES 3
 #define LIGNES 3
 
+// --------------------------------//
+// 			ELUECQUE ANTHONY       //
+// 			CORION GAUTHIER		   //
+// --------------------------------//
+//   BUT 2 : SAE Système et réseau //
 
 int main(int argc, char *argv[]){
-	int descripteurSocket;
+	
+    int descripteurSocket;
 	struct sockaddr_in sockaddrDistant;
 	socklen_t longueurAdresse;
 
 	char buffer[]="Hello server!"; // buffer stockant le message
 	int nb; /* nb d’octets écrits et lus */
-    char Recoi[256];
-	char ip_dest[16];
-	int port_dest;
-    int choix;
+    char Recoi[256]; /* Message de réception */
+	char ip_dest[16]; 
+
+    int choix,port_dest,row,col;
+    /* 
+        choix = permet de rentrer dans une boucle while de saisie 
+        row =  la ligne (de 0 à 2) de placement
+        col = la colonne (de 0 à 2) de placement
+    */
 
     /* Initialisation des reçu */
     char status[9];
     char placement[MAX_LEN];
 
-    /* La ligne et la colonne */
-    int row,col;
 
 	if (argc>1) { // si il y a au moins 2 arguments passés en ligne de commande, récupération ip et port
 		strncpy(ip_dest,argv[1],16);
@@ -60,10 +69,10 @@ int main(int argc, char *argv[]){
 	printf("Connexion au serveur %s:%d réussie!\n",ip_dest,port_dest);
 
 
-    /* Initialisation de la grille */
-    char grille[LIGNES][COLONNES];
-    int choixCol = 10,choixLigne = 10;
-    initGrille(grille);
+    // Préparation du jeu
+    char grille[LIGNES][COLONNES];   /* La grille de jeu */
+    int choixCol = 10,choixLigne = 10;  /* Initialisation de la colonne et la ligne */
+    initGrille(grille);  /* Initialisation de la grille */
     char Recoi_start[MAX_LEN];
 
     /* Réception de si le joueur peut commencer ou non */
