@@ -91,15 +91,15 @@ int main(int argc, char *argv[]){
 			autre = 1; /* L'autre joueur */
 			// Début de la boucle de jeu ! Tant que le jeu n'est pas fini on continue
 			while(1) {
-				write_int(connectSocket,joueur_actuel,messageEnvoi,(int)sizeof(messageEnvoi));
+				write_int(connectSocket[joueur_actuel],messageEnvoi,(int)sizeof(messageEnvoi));
 				/* Initialisation et envoi des X et O en fonction de leur position dans le socket */
 				char c1 = 'X'; char c2 = 'O';
 				/* Envoi au joueur qui ne joue pas qu'il peut joeur */
-				write_int(connectSocket,autre, messageEnvoi, sizeof(messageEnvoi));
+				write_int(connectSocket[autre], messageEnvoi, sizeof(messageEnvoi));
 				/* Envoi au joueur numéro 1 le symbole */
-				write_char(connectSocket,0,&c1,sizeof(c1));
+				write_char(connectSocket[0],&c1,sizeof(c1));
 				/* Envoi au joueur numéro 2 le symbole */
-				write_char(connectSocket,1,&c2,sizeof(c2));
+				write_char(connectSocket[1],&c2,sizeof(c2));
 
 				/* Boucle de jeu */
 				while (1){
@@ -114,14 +114,14 @@ int main(int argc, char *argv[]){
 					}
 
 					/* Transfert du message au client pour qu'il n'attend pas*/	
-					write_char(connectSocket,joueur_actuel,attente_non,sizeof(attente_non));	
+					write_char(connectSocket[joueur_actuel],attente_non,sizeof(attente_non));	
 					/* Attente d'une seconde pour que la transmission se passe bien */
 					sleep(1);
 					/* Transfert du message au client pour qu'il attend */
-					write_char(connectSocket,autre,attente,sizeof(attente));
+					write_char(connectSocket[autre],attente,sizeof(attente));
 					printf("\nEn attente d'une coordonnée...\n");
 					/* Réception des coordonnées du client */
-					read_char(connectSocket,joueur_actuel,messageRecu,LG_MESSAGE*sizeof(char));
+					read_char(connectSocket[joueur_actuel],messageRecu,LG_MESSAGE*sizeof(char));
 					/* Mise à jour de la grille */
 					updateGrille(grille,messageRecu[0],messageRecu[1],joueurJouer);
 
@@ -152,10 +152,10 @@ int main(int argc, char *argv[]){
 					printf("Changement : %c %c \n", joueurJouer, joueurEnFace);
 					/* Envoi au joueur qui passe dans la boucle actuellement le changement */
 					
-					write_char(connectSocket,joueur_actuel,MSGLigne,sizeof(MSGLigne));
+					write_char(connectSocket[joueur_actuel],MSGLigne,sizeof(MSGLigne));
 					sleep(1); /* Permet d'éviter le moindre bug */
 					/* Envoi à l'autre joueur le changement pour qu'il mette à jour sa grille chez lui directement */
-					write_char(connectSocket,autre,MSGLigne,sizeof(MSGLigne));
+					write_char(connectSocket[autre],MSGLigne,sizeof(MSGLigne));
 							
 					/* Condition pour savoir si le jeu ne continue pas pour fermer le serveur */
 					if (strcmp(Message,"continue")!=0){
