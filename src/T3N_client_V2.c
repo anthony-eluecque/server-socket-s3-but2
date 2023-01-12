@@ -222,6 +222,8 @@ int main(int argc, char *argv[]){
 
                                         printf("\nChoisissez une ligne: ");
                                         scanf(" %d", &choixLigne);
+                                        choixCol = choixCol -1;
+                                        choixLigne = choixLigne -1;
                                         /* Condition s'il est dans la grille ou non */
                                         choix = isInGrille(grille,choixLigne,choixCol);
                                         if (choix != -1) { /* Si non, alors on vérifie si la grille est vide */

@@ -20,17 +20,19 @@ void afficheGrille(char grille[3][3])
      * Affiche la grille pour le ou les joueurs.
      */
     printf("\n");
+    printf("  | 1 | 2 | 3 |\n---------------\n");
     int col,ligne;
     /* La ligne */
     for (ligne = 0 ; ligne<LIGNES ; ligne++){
         /* La colonne */
         for (col = 0 ; col< COLONNES ; col++){
-            printf("%c", grille[ligne][col]);
-            if (col != 2) {
-                printf("%c",'|');
+            if (col==0){
+                printf("%d | ",ligne+1);
             }
+            printf("%c%s",grille[ligne][col]," | ");
+
         }
-        printf("\n");
+        printf("\n---------------\n");
     }
 }
 
@@ -66,4 +68,3 @@ void updateGrille(char grille[3][3],int ligne,int colonne,char type) {
     /* Mise à jour de la grille en par un nouveau type */
     grille[ligne][colonne] = type;
 }
-
