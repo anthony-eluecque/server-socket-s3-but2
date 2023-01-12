@@ -25,7 +25,7 @@ Il était demandé que celui-ci soit réalisé en C avec plusieurs étapes :
         </tr>
         <tr>
             <td>1ère version ✔️
-            <td>Le serveur et le client se communiquent mutuelle les coups joués + respect des règles du jeu avec ajouts d'une fin, du gagnant | perdant</td>
+            <td>Le serveur et le client se communiquent mutuellement les coups joués + respect des règles du jeu avec ajouts d'une fin, du gagnant | perdant</td>
         </tr>
         <tr>
             <td>2ème version ✔️
