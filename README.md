@@ -21,7 +21,7 @@ Il était demandé que celui-ci soit réalisé en C avec plusieurs étapes :
         </tr>
         <tr>
             <td>Version 0<br>
-            <td>Le serveur et le client se communique mutellement les coups joués (sans respect des conditions de jeu (fin, grille pleine, ...)</td>
+            <td>Le serveur et le client se communiquent mutellement les coups joués (sans respect des conditions de jeu (fin, grille pleine, ...)</td>
         </tr>
         <tr>
             <td>1ère version ✔️
@@ -32,8 +32,8 @@ Il était demandé que celui-ci soit réalisé en C avec plusieurs étapes :
             <td>Le serveur ne joue plus mais héberge une partie pour deux clients</td>
         </tr>
         <tr>
-            <td>Bonus : 3ème version
-            <td>Dès qu'une partie a commencé, tous les clients qui rejoignents sont des spectateurs</td>
+            <td>Bonus : 3ème version ⏱️
+            <td>Dès qu'une partie a commencée, tous les clients qui rejoignent sont des spectateurs</td>
         </tr>
         <tr>
             <td>4ème version ✔️
