@@ -24,16 +24,20 @@ Il était demandé que celui-ci soit réalisé en C avec plusieurs étapes :
             <td>Le serveur et le client se communique mutellement les coups joués (sans respect des conditions de jeu (fin, grille pleine, ...)</td>
         </tr>
         <tr>
-            <td>1ère version<br>
+            <td>1ère version ✔️
             <td>Le serveur et le client se communique mutuelle les coups joués + respect des règles du jeu avec ajouts d'une fin, du gagnant | perdant</td>
         </tr>
         <tr>
-            <td>2ème version
+            <td>2ème version ✔️
             <td>Le serveur ne joue plus mais héberge une partie pour deux clients</td>
         </tr>
         <tr>
             <td>Bonus : 3ème version
             <td>Dès qu'une partie a commencé, tous les clients qui rejoignents sont des spectateurs</td>
+        </tr>
+        <tr>
+            <td>4ème version ✔️
+            <td>Le serveur permet de jouer simultanément plusieurs parties</td>
         </tr>
         </tbody>
 </table>
