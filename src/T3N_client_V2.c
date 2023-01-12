@@ -85,13 +85,8 @@ int main(int argc, char *argv[]){
 
         /* Variable de symbole actuel du joueur */
         char Color[256];
-
         /* Variable de symbole de l'adversaire */
         char Color_Adver[2];
-
-        /* Attente d'une seconde pour que la transmission se passe bien */
-        sleep(1);
-
         /* Réception du symbole actuel du joueur */
         read_char(descripteurSocket,Color,sizeof(Color));
         /* Insertion du symbole du joueur et de l'adversaire */
@@ -100,7 +95,6 @@ int main(int argc, char *argv[]){
         } else {
             Color_Adver[0] = 'X';
         }
-
         printf("\n\nVous êtes la pièce : %c \n et l'adversaire est : %c \n\n", Color[0], Color_Adver[0]);
 
         /* Initialisation des message de reçu */
@@ -114,8 +108,6 @@ int main(int argc, char *argv[]){
             afficheGrille(grille);
             printf("\nEn attente d'une instruction du serveur... \n");
 
-            /* Attente d'une seconde pour que la transmission se passe bien */
-            sleep(1);
 
             /* Réception de l'information si le joueur attend ou non */
             read_char(descripteurSocket,Recoi_2,sizeof(Recoi_2));
@@ -125,7 +117,6 @@ int main(int argc, char *argv[]){
             /* Boucle qui permet au client de rester dedans s'il est en attente */
             while (choix_2==0){
                 printf("Attente : En attente de l'adversaire\n");
-                sleep(1);
 
                 /* Réception des coordonnées que l'adversaire a mis */
                 read_char(descripteurSocket,Recoi_3,sizeof(Recoi_3));
@@ -210,8 +201,7 @@ int main(int argc, char *argv[]){
             write_char(descripteurSocket,Envoi,sizeof(Envoi));
             printf("\nColonne envoyé : %d\n",Envoi[0]);
             printf("Ligne envoyé : %d\n\n",Envoi[1]);
-            
-            sleep(2);
+
             printf("\nEn attente d'une instruction du serveur... \n");
 
             /* Réception du résultat du serveur */
@@ -266,9 +256,6 @@ int main(int argc, char *argv[]){
                 close(descripteurSocket); /* Fermeture du descripteur */
                 exit(0);
             }
-
-            /* Attente d'une seconde pour que la transmission se passe bien */
-            sleep(1);
     
         }
 

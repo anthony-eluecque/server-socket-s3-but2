@@ -153,7 +153,6 @@ int main(int argc, char *argv[]){
 					/* Envoi au joueur qui passe dans la boucle actuellement le changement */
 					
 					write_char(connectSocket[joueur_actuel],MSGLigne,sizeof(MSGLigne));
-					sleep(1); /* Permet d'éviter le moindre bug */
 					/* Envoi à l'autre joueur le changement pour qu'il mette à jour sa grille chez lui directement */
 					write_char(connectSocket[autre],MSGLigne,sizeof(MSGLigne));
 							
