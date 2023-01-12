@@ -76,28 +76,19 @@ int main(int argc, char *argv[]){
     
             return 0;
         default:
+    }
             // Recoi_start[nb]='\0';
             // printf("Client : Lancement Message %s reçu! (%d octets)\n\n", Recoi_start, nb);
             if (strcmp(Recoi_start,"Vous êtes dans la file d'attente")==0){
+                printf("\nBienvenue en tant que spectateur de la partie !\n");
+                printf("\nVous êtes en attente d'une fin de manche...\n");
+                printf("\ntest\n");
                 while(1) {
-                    printf("\nBienvenue en tant que spectateur de la partie !\n");
-                    printf("\nVous êtes en attente d'une fin de manche...\n");
-                    printf("\ntest\n");
-                    sleep(1);
                     switch(nb = read(descripteurSocket, Recoi_start2, sizeof(Recoi_start2))) {
-                        case -1 :
-                            perror("Erreur de lecture...");
-                            close(descripteurSocket);
-                            exit(-4);
-                        case 0 : 
-
-                            return 0;
-                        default:
-                            printf("\ntest");
-                            printf("%s", Recoi_start2);
+                        printf("\ntest2");
                     }
                 }
-            }
+            } else {
             if (strcmp(Recoi_start,"start")==0){
                 printf("Client : Connexion réussi, début de partie...\n");
                 char Color[256];
@@ -278,8 +269,7 @@ int main(int argc, char *argv[]){
                                             }
                                             sleep(1);
                                     }
-                            }  
-                        }
+                            }  }
                 }
 
             }
