@@ -10,6 +10,7 @@
 #include <time.h>
 #include "./utils/Utils.c"
 #include "./utils/Utils_serveur.c"
+#include "./utils/Utils_socket_serveur.c"
 
 #define NB_JOUEURS 2
 #define COLONNES 3
